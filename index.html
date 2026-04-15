@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor de Fotos · Google Drive</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #181c27;
+            --surface2: #1e2436;
+            --border: rgba(255,255,255,0.07);
+            --border-hover: rgba(255,255,255,0.16);
+            --green: #22c55e;
+            --green-dim: rgba(34,197,94,0.15);
+            --green-glow: rgba(34,197,94,0.35);
+            --text: #e2e8f0;
+            --text-muted: #64748b;
+            --text-dim: #94a3b8;
+            --accent: #3b82f6;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+        }
+
+        /* ── HEADER ── */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(15,17,23,0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            flex-shrink: 0;
+        }
+
+        .logo-dot {
+            width: 8px; height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--green-glow);
+        }
+
+        .header-spacer { flex: 1; }
+
+        .settings-btn {
+            display: flex; align-items: center; gap: 6px;
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--surface);
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 500;
+            transition: all .15s;
+        }
+        .settings-btn:hover {
+            border-color: var(--border-hover);
+            color: var(--text);
+            background: var(--surface2);
+        }
+
+        /* ── FILTER BAR ── */
+        .filter-bar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .field-label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--text-muted);
+            font-family: 'DM Mono', monospace;
+        }
+
+        .field-input {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 8px 12px;
+            color: var(--text);
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+            min-width: 80px;
+        }
+        .field-input:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px var(--green-dim);
+        }
+        .field-input::placeholder { color: var(--text-muted); }
+
+        select.field-input { cursor: pointer; }
+
+        .folder-input { min-width: 220px; font-size: 11px; }
+
+        .load-btn {
+            padding: 8px 20px;
+            background: var(--green);
+            border: none;
+            border-radius: 9px;
+            color: #0a1a0f;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity .15s, transform .1s;
+            white-space: nowrap;
+        }
+        .load-btn:hover { opacity: .9; transform: translateY(-1px); }
+        .load-btn:active { transform: translateY(0); }
+        .load-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+        /* ── STATUS BAR ── */
+        .status-bar {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--green);
+            background: rgba(34,197,94,0.06);
+            border-bottom: 1px solid rgba(34,197,94,0.15);
+        }
+        .status-bar.active { display: flex; }
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── GRID AREA ── */
+        #gridArea {
+            padding: 24px;
+            min-height: calc(100vh - 200px);
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            gap: 12px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+        .empty-state svg { opacity: .3; }
+        .empty-state p { font-size: 14px; line-height: 1.6; }
+        .empty-state strong { color: var(--green); }
+
+        /* Date group */
+        .date-group { margin-bottom: 32px; }
+
+        .date-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .date-label {
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-dim);
+            letter-spacing: .05em;
+        }
+
+        .date-line { flex: 1; height: 1px; background: var(--border); }
+
+        .date-count {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: 'DM Mono', monospace;
+        }
+
+        /* Photo grid */
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 8px;
+        }
+
+        /* Photo card */
+        .photo-card {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 1.5px solid transparent;
+            transition: border-color .15s, transform .12s, box-shadow .15s;
+            background: var(--surface);
+        }
+        .photo-card:hover {
+            border-color: var(--border-hover);
+            transform: scale(1.02);
+            box-shadow: 0 8px 24px rgba(0,0,0,.4);
+        }
+        .photo-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: opacity .2s;
+        }
+        .photo-card .overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,.75) 0%, transparent 55%);
+            opacity: 0;
+            transition: opacity .15s;
+        }
+        .photo-card:hover .overlay { opacity: 1; }
+
+        .photo-card .card-info {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            padding: 8px 8px 7px;
+            background: linear-gradient(to top, rgba(0,0,0,.8) 0%, transparent 100%);
+        }
+        .card-secundario {
+            font-size: 9px;
+            font-weight: 700;
+            color: rgba(255,255,255,.95);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.3;
+        }
+        .card-principal {
+            font-size: 8px;
+            color: rgba(255,255,255,.55);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 1px;
+        }
+
+        /* Zoom icon on hover */
+        .photo-card .zoom-icon {
+            position: absolute;
+            top: 8px; right: 8px;
+            background: rgba(0,0,0,.55);
+            border-radius: 6px;
+            padding: 4px;
+            opacity: 0;
+            transition: opacity .15s;
+            display: flex;
+        }
+        .photo-card:hover .zoom-icon { opacity: 1; }
+
+        /* ── LIGHTBOX ── */
+        #lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(5,7,12,0.95);
+            backdrop-filter: blur(12px);
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        #lightbox.open {
+            display: flex;
+            animation: lbIn .18s ease;
+        }
+        @keyframes lbIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .lb-close {
+            position: absolute;
+            top: 16px; right: 20px;
+            background: rgba(255,255,255,.08);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            width: 38px; height: 38px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            color: var(--text-dim);
+            transition: all .15s;
+            z-index: 10;
+        }
+        .lb-close:hover { background: rgba(255,255,255,.15); color: var(--text); }
+
+        .lb-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,.07);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 44px; height: 60px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            color: var(--text-dim);
+            transition: all .15s;
+            z-index: 10;
+        }
+        .lb-nav:hover { background: rgba(255,255,255,.14); color: var(--text); }
+        .lb-prev { left: 16px; }
+        .lb-next { right: 16px; }
+        .lb-nav:disabled { opacity: .2; cursor: default; }
+
+        .lb-img-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: calc(100vw - 140px);
+            max-height: calc(100vh - 130px);
+            position: relative;
+        }
+
+        #lbImg {
+            max-width: 100%;
+            max-height: calc(100vh - 130px);
+            border-radius: 10px;
+            object-fit: contain;
+            box-shadow: 0 30px 80px rgba(0,0,0,.6);
+            transition: opacity .18s;
+        }
+        #lbImg.loading { opacity: .2; }
+
+        .lb-spinner {
+            position: absolute;
+            display: none;
+        }
+        .lb-spinner.active { display: block; }
+        .lb-spin-circle {
+            width: 36px; height: 36px;
+            border: 2.5px solid rgba(34,197,94,.2);
+            border-top-color: var(--green);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        .lb-caption {
+            margin-top: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .lb-secundario {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .lb-principal {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'DM Mono', monospace;
+        }
+
+        .lb-date {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: 'DM Mono', monospace;
+            margin-top: 2px;
+        }
+
+        .lb-counter {
+            position: absolute;
+            top: 18px; left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            font-family: 'DM Mono', monospace;
+            color: var(--text-muted);
+            background: rgba(0,0,0,.4);
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .lb-open-drive {
+            margin-top: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-family: 'DM Mono', monospace;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 4px 10px;
+            transition: all .15s;
+        }
+        .lb-open-drive:hover {
+            border-color: var(--border-hover);
+            color: var(--text-dim);
+        }
+
+        /* ── SETTINGS MODAL ── */
+        #settingsModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 300;
+            background: rgba(5,7,12,0.7);
+            backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+        }
+        #settingsModal.open { display: flex; animation: lbIn .15s ease; }
+
+        .settings-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            width: 100%;
+            max-width: 440px;
+            padding: 28px;
+            box-shadow: 0 40px 80px rgba(0,0,0,.5);
+        }
+
+        .settings-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .settings-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1;
+            transition: color .1s;
+        }
+        .settings-close:hover { color: var(--text); }
+
+        .settings-field { margin-bottom: 16px; }
+        .settings-field .field-label { margin-bottom: 6px; display: block; }
+        .settings-field .field-input { width: 100%; }
+
+        .settings-note {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-top: 4px;
+        }
+        .settings-note a { color: var(--accent); text-decoration: none; }
+        .settings-note a:hover { text-decoration: underline; }
+
+        .settings-save {
+            width: 100%;
+            padding: 10px;
+            background: var(--green);
+            border: none;
+            border-radius: 10px;
+            color: #0a1a0f;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: opacity .15s;
+        }
+        .settings-save:hover { opacity: .9; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
+
+        /* Keyboard hint */
+        .kb-hint {
+            position: fixed;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 201;
+            opacity: 0;
+            transition: opacity .3s;
+            pointer-events: none;
+        }
+        #lightbox.open .kb-hint { opacity: .5; }
+        .kb-key {
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 5px;
+            padding: 3px 8px;
+            font-size: 10px;
+            font-family: 'DM Mono', monospace;
+            color: var(--text-dim);
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+    <div class="logo">
+        <div class="logo-dot"></div>
+        Visor de Fotos Drive
+    </div>
+    <div class="header-spacer"></div>
+    <button class="settings-btn" onclick="openSettings()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        Configuración
+    </button>
+</header>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+    <div class="field-group" style="flex:1; min-width:200px;">
+        <label class="field-label">ID de carpeta Drive</label>
+        <input type="text" id="folderId" class="field-input folder-input" placeholder="1Sox86IWQ6IoAWDUx...">
+    </div>
+    <div class="field-group">
+        <label class="field-label">Disciplina</label>
+        <select id="disciplina" class="field-input" onchange="onDisciplinaChange()">
+            <option value="">— Todas —</option>
+            <option value="civil">Civil</option>
+            <option value="em">Electromecánica</option>
+        </select>
+    </div>
+    <div class="field-group">
+        <label class="field-label">Tema principal</label>
+        <select id="temaPrincipal" class="field-input" onchange="onTemaPrincipalChange()" style="min-width:180px;">
+            <option value="">— Elige disciplina —</option>
+        </select>
+    </div>
+    <div class="field-group">
+        <label class="field-label">Tema secundario</label>
+        <select id="temaSec" class="field-input" onchange="applyFilters()" style="min-width:180px;">
+            <option value="">— Todos —</option>
+        </select>
+    </div>
+    <div class="field-group">
+        <label class="field-label">Desde</label>
+        <input type="date" id="fechaDesde" class="field-input" onchange="applyFilters()">
+    </div>
+    <div class="field-group">
+        <label class="field-label">Hasta</label>
+        <input type="date" id="fechaHasta" class="field-input" onchange="applyFilters()">
+    </div>
+    <button class="load-btn" id="loadBtn" onclick="loadFolder()">Cargar fotos</button>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar" id="statusBar">
+    <svg class="spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+    <span id="statusText">Cargando…</span>
+</div>
+
+<!-- GRID -->
+<div id="gridArea">
+    <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
+            <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+            <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/>
+            <path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/>
+            <path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/>
+            <path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/>
+            <path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 27h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
+        </svg>
+        <p>Ingresa el ID de carpeta y haz clic en <strong>Cargar fotos</strong>.<br>Configura tu Google API Key en <strong>Configuración</strong>.</p>
+    </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox">
+    <div class="lb-counter" id="lbCounter">1 / 1</div>
+
+    <button class="lb-close" onclick="closeLightbox()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+
+    <button class="lb-nav lb-prev" id="lbPrev" onclick="lbNavigate(-1)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+
+    <div style="display:flex; flex-direction:column; align-items:center; max-width:calc(100vw - 140px);">
+        <div class="lb-img-container">
+            <img id="lbImg" src="" alt="">
+            <div class="lb-spinner" id="lbSpinner">
+                <div class="lb-spin-circle"></div>
+            </div>
+        </div>
+        <div class="lb-caption">
+            <div class="lb-secundario" id="lbSecundario"></div>
+            <div class="lb-principal" id="lbPrincipal"></div>
+            <div class="lb-date" id="lbDate"></div>
+            <a id="lbDriveLink" class="lb-open-drive" href="#" target="_blank">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                Abrir en Drive
+            </a>
+        </div>
+    </div>
+
+    <button class="lb-nav lb-next" id="lbNext" onclick="lbNavigate(1)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+
+    <div class="kb-hint">
+        <span class="kb-key">← →</span>
+        <span class="kb-key">ESC</span>
+    </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settingsModal">
+    <div class="settings-box">
+        <div class="settings-title">
+            Configuración
+            <button class="settings-close" onclick="closeSettings()">×</button>
+        </div>
+
+        <div class="settings-field">
+            <label class="field-label">Google API Key</label>
+            <input type="password" id="apiKeyInput" class="field-input" placeholder="AIzaSy…" style="width:100%">
+            <p class="settings-note">Obtén una en <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a> con la API de Drive habilitada.</p>
+        </div>
+
+        <div class="settings-field">
+            <label class="field-label">Carpeta Drive predeterminada (ID)</label>
+            <input type="text" id="defaultFolderInput" class="field-input" placeholder="1Sox86IWQ6Io…" style="width:100%; font-size:11px;">
+            <p class="settings-note">Se carga automáticamente al abrir la página.</p>
+        </div>
+
+        <button class="settings-save" onclick="saveSettings()">Guardar</button>
+    </div>
+</div>
+
+<script>
+    // ── Constants ──────────────────────────────────────────────────────────
+    const TOPICS_CIVIL_URL = 'https://raw.githubusercontent.com/registrodeinformesdiarios-svg/marcas-agua-supervision/refs/heads/main/TitulosCivil.txt';
+    const TOPICS_EM_URL    = 'https://raw.githubusercontent.com/registrodeinformesdiarios-svg/marcas-agua-supervision/refs/heads/main/TitulosEM.txt';
+
+    // ── State ──────────────────────────────────────────────────────────────
+    let allFiles     = [];
+    let filtered     = [];
+    let driveTopics  = { civil: null, em: null };
+    let lbIndex      = 0;   // current lightbox photo index within `filtered`
+
+    // ── Init ───────────────────────────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+        const apiKey   = localStorage.getItem('viewer_api_key') || '';
+        const defFoldr = localStorage.getItem('viewer_folder')  || '';
+        if (apiKey)   document.getElementById('apiKeyInput').value     = apiKey;
+        if (defFoldr) document.getElementById('defaultFolderInput').value = defFoldr;
+        if (defFoldr) document.getElementById('folderId').value        = defFoldr;
+    });
+
+    // ── Settings ───────────────────────────────────────────────────────────
+    function openSettings() {
+        document.getElementById('settingsModal').classList.add('open');
+    }
+    function closeSettings() {
+        document.getElementById('settingsModal').classList.remove('open');
+    }
+    function saveSettings() {
+        const k = document.getElementById('apiKeyInput').value.trim();
+        const f = document.getElementById('defaultFolderInput').value.trim();
+        localStorage.setItem('viewer_api_key', k);
+        localStorage.setItem('viewer_folder',  f);
+        if (f) document.getElementById('folderId').value = f;
+        closeSettings();
+    }
+
+    // ── Parse filename ─────────────────────────────────────────────────────
+    function parseFilename(name) {
+        const base  = name.replace(/\.[^.]+$/, '');
+        const noSeq = base.replace(/_\d+$/, '');
+        const m = noSeq.match(/^(\d{8})_(.+?)\s*\(([^)]+)\)\s*$/);
+        if (m) return { fecha: m[1], temaSecundario: m[2].trim(), temaPrincipal: m[3].trim() };
+        const d = noSeq.match(/^(\d{8})_(.+)$/);
+        if (d) return { fecha: d[1], temaSecundario: d[2].trim(), temaPrincipal: '' };
+        return { fecha: '', temaSecundario: base, temaPrincipal: '' };
+    }
+
+    function formatFecha(f) {
+        if (!f || f.length !== 8) return f || '';
+        return `${f.slice(0,4)}-${f.slice(4,6)}-${f.slice(6,8)}`;
+    }
+
+    // ── Topics ─────────────────────────────────────────────────────────────
+    function parseTopicsTxt(txt) {
+        const lines = txt.split('\n').map(l => l.trim()).filter(Boolean);
+        const result = [];
+        let current = null;
+        for (const line of lines) {
+            const mainMatch = line.match(/^<(.+)>$/);
+            if (mainMatch) { current = { label: mainMatch[1], subs: [] }; result.push(current); }
+            else if (current) {
+                const sub = line.match(/^\d+<(.+)>$/) || line.match(/^<(.+)>$/);
+                current.subs.push(sub ? sub[1] : line);
+            }
+        }
+        return result;
+    }
+
+    async function loadTopics(disciplina) {
+        if (driveTopics[disciplina]) return driveTopics[disciplina];
+        const url = disciplina === 'civil' ? TOPICS_CIVIL_URL : TOPICS_EM_URL;
+        try {
+            const res = await fetch(url);
+            const txt = await res.text();
+            driveTopics[disciplina] = parseTopicsTxt(txt);
+            return driveTopics[disciplina];
+        } catch(e) { return []; }
+    }
+
+    async function onDisciplinaChange() {
+        const disc    = document.getElementById('disciplina').value;
+        const mainSel = document.getElementById('temaPrincipal');
+        const secSel  = document.getElementById('temaSec');
+        mainSel.innerHTML = '<option value="">— Todos —</option>';
+        secSel.innerHTML  = '<option value="">— Todos —</option>';
+        if (!disc) { applyFilters(); return; }
+        const topics = await loadTopics(disc);
+        topics.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.label; opt.textContent = t.label;
+            mainSel.appendChild(opt);
+        });
+        applyFilters();
+    }
+
+    async function onTemaPrincipalChange() {
+        const disc   = document.getElementById('disciplina').value;
+        const main   = document.getElementById('temaPrincipal').value;
+        const secSel = document.getElementById('temaSec');
+        secSel.innerHTML = '<option value="">— Todos —</option>';
+        if (!disc || !main) { applyFilters(); return; }
+        const topics = await loadTopics(disc);
+        const found  = topics.find(t => t.label === main);
+        if (found) {
+            found.subs.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s; opt.textContent = s;
+                secSel.appendChild(opt);
+            });
+        }
+        applyFilters();
+    }
+
+    // ── Load folder ────────────────────────────────────────────────────────
+    async function loadFolder() {
+        const apiKey   = localStorage.getItem('viewer_api_key');
+        const folderId = document.getElementById('folderId').value.trim();
+
+        if (!apiKey) { openSettings(); return; }
+        if (!folderId) { document.getElementById('folderId').focus(); return; }
+
+        localStorage.setItem('viewer_folder', folderId);
+
+        const statusBar  = document.getElementById('statusBar');
+        const statusText = document.getElementById('driveStatusText') || document.getElementById('statusText');
+        const loadBtn    = document.getElementById('loadBtn');
+
+        statusBar.classList.add('active');
+        document.getElementById('statusText').textContent = 'Conectando con Drive…';
+        loadBtn.disabled = true;
+        allFiles = [];
+
+        try {
+            let pageToken = '';
+            let total = 0;
+            do {
+                const params = new URLSearchParams({
+                    q: `'${folderId}' in parents and mimeType contains 'image/' and trashed = false`,
+                    fields: 'nextPageToken,files(id,name,mimeType,thumbnailLink)',
+                    pageSize: 1000,
+                    key: apiKey,
+                    ...(pageToken ? { pageToken } : {})
+                });
+                const res  = await fetch(`https://www.googleapis.com/drive/v3/files?${params}`);
+                const data = await res.json();
+                if (data.error) throw new Error(data.error.message);
+                (data.files || []).forEach(f => {
+                    const parsed = parseFilename(f.name);
+                    allFiles.push({ ...f, ...parsed });
+                });
+                total += (data.files || []).length;
+                pageToken = data.nextPageToken || '';
+                document.getElementById('statusText').textContent = `Cargando… ${total} fotos`;
+            } while (pageToken);
+
+            statusBar.classList.remove('active');
+            applyFilters();
+        } catch(err) {
+            document.getElementById('statusText').textContent = `Error: ${err.message}`;
+        } finally {
+            loadBtn.disabled = false;
+        }
+    }
+
+    // ── Apply filters & render ─────────────────────────────────────────────
+    function applyFilters() {
+        const principal  = document.getElementById('temaPrincipal').value.toLowerCase().trim();
+        const secundario = document.getElementById('temaSec').value.toLowerCase().trim();
+        const desde      = document.getElementById('fechaDesde').value.replace(/-/g,'');
+        const hasta      = document.getElementById('fechaHasta').value.replace(/-/g,'');
+
+        filtered = allFiles.filter(f => {
+            if (principal) {
+                if (!f.temaPrincipal) return false;
+                if (!f.temaPrincipal.toLowerCase().includes(principal) &&
+                    !principal.includes(f.temaPrincipal.toLowerCase())) return false;
+            }
+            if (secundario) {
+                if (!f.temaSecundario.toLowerCase().includes(secundario) &&
+                    !secundario.includes(f.temaSecundario.toLowerCase())) return false;
+            }
+            if (desde && f.fecha && f.fecha < desde) return false;
+            if (hasta && f.fecha && f.fecha > hasta) return false;
+            return true;
+        });
+
+        renderGrid();
+    }
+
+    // ── Render grid ────────────────────────────────────────────────────────
+    function renderGrid() {
+        const area   = document.getElementById('gridArea');
+        const apiKey = localStorage.getItem('viewer_api_key');
+
+        if (allFiles.length === 0) {
+            area.innerHTML = `<div class="empty-state">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".25"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <p>Haz clic en <strong>Cargar fotos</strong> para explorar la carpeta.</p>
+            </div>`;
+            return;
+        }
+
+        if (filtered.length === 0) {
+            area.innerHTML = `<div class="empty-state">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".25"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <p>Ninguna foto coincide con los filtros seleccionados.</p>
+            </div>`;
+            return;
+        }
+
+        // Group by date
+        const byDate = {};
+        filtered.forEach((f, idx) => {
+            const d = formatFecha(f.fecha) || 'Sin fecha';
+            if (!byDate[d]) byDate[d] = [];
+            byDate[d].push({ ...f, _idx: idx });
+        });
+
+        area.innerHTML = Object.entries(byDate)
+            .sort(([a],[b]) => b.localeCompare(a))
+            .map(([date, files]) => `
+            <div class="date-group">
+                <div class="date-header">
+                    <span class="date-label">${date}</span>
+                    <div class="date-line"></div>
+                    <span class="date-count">${files.length} foto${files.length !== 1 ? 's' : ''}</span>
+                </div>
+                <div class="photo-grid">
+                    ${files.map(f => photoCard(f, apiKey)).join('')}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function photoCard(f, apiKey) {
+        const thumb = f.thumbnailLink
+            ? f.thumbnailLink.replace(/=s\d+/, '=s320')
+            : `https://drive.google.com/thumbnail?id=${f.id}&sz=w320&key=${apiKey}`;
+
+        return `
+        <div class="photo-card" onclick="openLightbox(${f._idx})" title="${f.temaSecundario}">
+            <img src="${thumb}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%231e2436%22 width=%22100%22 height=%22100%22/><text y=%2255%22 x=%2250%22 text-anchor=%22middle%22 font-size=%2228%22>📷</text></svg>'">
+            <div class="overlay"></div>
+            <div class="zoom-icon">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            </div>
+            <div class="card-info">
+                <div class="card-secundario">${f.temaSecundario || f.name}</div>
+                ${f.temaPrincipal ? `<div class="card-principal">${f.temaPrincipal}</div>` : ''}
+            </div>
+        </div>`;
+    }
+
+    // ── Lightbox ───────────────────────────────────────────────────────────
+    function openLightbox(idx) {
+        lbIndex = idx;
+        document.getElementById('lightbox').classList.add('open');
+        document.body.style.overflow = 'hidden';
+        loadLbPhoto(idx);
+    }
+
+    function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    function lbNavigate(dir) {
+        const newIdx = lbIndex + dir;
+        if (newIdx < 0 || newIdx >= filtered.length) return;
+        lbIndex = newIdx;
+        loadLbPhoto(lbIndex);
+    }
+
+    function loadLbPhoto(idx) {
+        const f      = filtered[idx];
+        const apiKey = localStorage.getItem('viewer_api_key');
+        const img    = document.getElementById('lbImg');
+        const spinner = document.getElementById('lbSpinner');
+
+        // Use high-res thumbnail (sz=w1600) → best quality without needing download scope
+        const hiRes = f.thumbnailLink
+            ? f.thumbnailLink.replace(/=s\d+/, '=s1600')
+            : `https://drive.google.com/thumbnail?id=${f.id}&sz=w1600`;
+
+        img.classList.add('loading');
+        spinner.classList.add('active');
+
+        const tmp = new Image();
+        tmp.onload = () => {
+            img.src = hiRes;
+            img.classList.remove('loading');
+            spinner.classList.remove('active');
+        };
+        tmp.onerror = () => {
+            img.src = hiRes; // try anyway
+            img.classList.remove('loading');
+            spinner.classList.remove('active');
+        };
+        tmp.src = hiRes;
+
+        // Caption
+        document.getElementById('lbSecundario').textContent = f.temaSecundario || f.name;
+        document.getElementById('lbPrincipal').textContent  = f.temaPrincipal || '';
+        document.getElementById('lbDate').textContent       = formatFecha(f.fecha) || '';
+        document.getElementById('lbDriveLink').href         = `https://drive.google.com/file/d/${f.id}/view`;
+        document.getElementById('lbCounter').textContent    = `${idx + 1} / ${filtered.length}`;
+
+        // Nav buttons
+        document.getElementById('lbPrev').disabled = idx === 0;
+        document.getElementById('lbNext').disabled = idx === filtered.length - 1;
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', e => {
+        const lb = document.getElementById('lightbox');
+        if (!lb.classList.contains('open')) return;
+        if (e.key === 'Escape')      closeLightbox();
+        if (e.key === 'ArrowLeft')   lbNavigate(-1);
+        if (e.key === 'ArrowRight')  lbNavigate(1);
+    });
+
+    // Click outside image to close
+    document.getElementById('lightbox').addEventListener('click', function(e) {
+        if (e.target === this) closeLightbox();
+    });
+
+    // Settings modal outside click
+    document.getElementById('settingsModal').addEventListener('click', function(e) {
+        if (e.target === this) closeSettings();
+    });
+</script>
+</body>
+</html>
