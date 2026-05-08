@@ -513,6 +513,104 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
 
+        /* ── PROJECT BANNER ── */
+        .project-banner {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            background: rgba(59,130,246,0.12);
+            border: 1px solid rgba(59,130,246,0.25);
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #93c5fd;
+            flex-shrink: 0;
+        }
+        .project-banner.visible { display: flex; }
+        .project-banner-name { font-weight: 700; color: #bfdbfe; }
+        .catalog-status {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-family: 'DM Mono', monospace;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .catalog-status.loading { background: rgba(100,116,139,0.2); color: var(--text-muted); }
+        .catalog-status.ok      { background: rgba(34,197,94,0.15); color: var(--green); }
+        .catalog-status.err     { background: rgba(251,146,60,0.15); color: #fb923c; }
+
+        /* ── UNCLASSIFIED BAR & PANEL ── */
+        .unclassified-bar {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 24px;
+            background: rgba(251,146,60,0.06);
+            border-bottom: 1px solid rgba(251,146,60,0.16);
+            font-size: 12px;
+            color: #fb923c;
+            flex-wrap: wrap;
+        }
+        .unclassified-bar.visible { display: flex; }
+        .unclassified-count { font-weight: 700; font-family: 'DM Mono', monospace; }
+        .unclassified-btn {
+            padding: 5px 12px;
+            border: 1px solid rgba(251,146,60,0.4);
+            border-radius: 8px;
+            background: rgba(251,146,60,0.1);
+            color: #fb923c;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .15s;
+        }
+        .unclassified-btn:hover { background: rgba(251,146,60,0.2); }
+        .unclassified-btn.active { background: rgba(251,146,60,0.28); border-color: #fb923c; }
+
+        /* Unclassified card indicators */
+        .photo-card.unclassified { border-color: rgba(251,146,60,0.45); }
+        .photo-card.unclassified:hover { border-color: #fb923c; }
+        .unclassified-icon {
+            position: absolute;
+            top: 7px; left: 7px;
+            background: rgba(251,146,60,0.92);
+            border-radius: 5px;
+            padding: 2px 5px;
+            font-size: 9px;
+            font-weight: 700;
+            font-family: 'DM Mono', monospace;
+            color: #1a0800;
+            line-height: 1.4;
+            letter-spacing: .03em;
+        }
+
+        /* Unclassified detail table */
+        .unclassified-detail {
+            display: none;
+            background: rgba(251,146,60,0.04);
+            border-bottom: 1px solid rgba(251,146,60,0.1);
+            padding: 12px 24px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        .unclassified-detail.visible { display: block; }
+        .unclassified-detail::-webkit-scrollbar { width: 4px; }
+        .unclassified-detail::-webkit-scrollbar-thumb { background: rgba(251,146,60,0.3); border-radius: 2px; }
+        .unclass-table { width: 100%; border-collapse: collapse; font-size: 11px; font-family: 'DM Mono', monospace; }
+        .unclass-table th { color: var(--text-muted); font-weight: 600; text-align: left; padding: 3px 10px 6px 0; border-bottom: 1px solid rgba(251,146,60,0.15); }
+        .unclass-table td { padding: 4px 10px 4px 0; color: var(--text-dim); vertical-align: top; }
+        .unclass-table tbody tr:hover td { color: var(--text); cursor: pointer; }
+        .unclass-status {
+            font-size: 9px; font-weight: 700;
+            padding: 2px 6px; border-radius: 4px; white-space: nowrap;
+        }
+        .unclass-status.sin_formato        { background: rgba(148,163,184,0.15); color: #94a3b8; }
+        .unclass-status.tema_desconocido   { background: rgba(251,146,60,0.15);  color: #fb923c; }
+        .unclass-status.titulo_no_catalogo { background: rgba(234,179,8,0.15);   color: #eab308; }
+
         /* Keyboard hint */
         .kb-hint {
             position: fixed;
@@ -547,6 +645,12 @@
         Visor de Fotos Drive
     </div>
     <div class="header-spacer"></div>
+    <!-- Project banner (visible when ?proyecto= param is set) -->
+    <div class="project-banner" id="projectBanner">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        <span id="projectBannerName" class="project-banner-name"></span>
+        <span id="catalogStatus" class="catalog-status loading">Cargando catálogo…</span>
+    </div>
     <button class="settings-btn" onclick="openSettings()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
         Configuración
@@ -588,6 +692,27 @@
         <input type="date" id="fechaHasta" class="field-input" onchange="applyFilters()">
     </div>
     <button class="load-btn" id="loadBtn" onclick="loadFolder()">Cargar fotos</button>
+</div>
+
+<!-- UNCLASSIFIED BAR (visible after loading when catalog is available) -->
+<div class="unclassified-bar" id="unclassifiedBar">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <span><span class="unclassified-count" id="unclassifiedCount">0</span> fotos sin clasificar según el catálogo</span>
+    <button class="unclassified-btn" id="unclassifiedToggle" onclick="toggleUnclassifiedFilter()">Ver solo sin clasificar</button>
+    <button class="unclassified-btn" id="unclassifiedDetailBtn" onclick="toggleUnclassifiedDetail()">▾ Ver lista</button>
+</div>
+<div class="unclassified-detail" id="unclassifiedDetail">
+    <table class="unclass-table">
+        <thead>
+            <tr>
+                <th>Archivo</th>
+                <th>Tema detectado</th>
+                <th>Título</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody id="unclassifiedTableBody"></tbody>
+    </table>
 </div>
 
 <!-- STATUS BAR -->
@@ -677,23 +802,214 @@
 
 <script>
     // ── Constants ──────────────────────────────────────────────────────────
-    const TOPICS_CIVIL_URL = 'https://raw.githubusercontent.com/registrodeinformesdiarios-svg/marcas-agua-supervision/refs/heads/main/TitulosCivil.txt';
-    const TOPICS_EM_URL    = 'https://raw.githubusercontent.com/registrodeinformesdiarios-svg/marcas-agua-supervision/refs/heads/main/TitulosEM.txt';
+    const TOPICS_CIVIL_URL   = 'https://raw.githubusercontent.com/registrodeinformesdiarios-svg/marcas-agua-supervision/refs/heads/main/TitulosCivil.txt';
+    const TOPICS_EM_URL      = 'https://raw.githubusercontent.com/registrodeinformesdiarios-svg/marcas-agua-supervision/refs/heads/main/TitulosEM.txt';
+    const CATALOG_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx768wbs79en6lCrR9Q_9hfso3pf_fS_JOvanACvYE0tLRdiZpdjFU-4ADJTzL_wwVqNg/exec";
+
+    const URL_PARAMS     = new URLSearchParams(window.location.search);
+    const PROYECTO_PARAM = URL_PARAMS.get("proyecto") || "";
+    const CARPETA_PARAM  = URL_PARAMS.get("carpetaId") || "";
 
     // ── State ──────────────────────────────────────────────────────────────
-    let allFiles     = [];
-    let filtered     = [];
-    let driveTopics  = { civil: null, em: null };
-    let lbIndex      = 0;   // current lightbox photo index within `filtered`
+    let allFiles             = [];
+    let filtered             = [];
+    let driveTopics          = { civil: null, em: null };
+    let lbIndex              = 0;   // current lightbox photo index within `filtered`
+    const _catalogosDrive    = {};  // { 'civil': rawTxt, 'em': rawTxt } from project App Script
+    let catalogIndex         = {};  // { 'tema lowercase': Set<'title lowercase'> }
+    let showOnlyUnclassified = false;
 
     // ── Init ───────────────────────────────────────────────────────────────
     window.addEventListener('DOMContentLoaded', () => {
         const apiKey   = localStorage.getItem('viewer_api_key') || '';
         const defFoldr = localStorage.getItem('viewer_folder')  || '';
-        if (apiKey)   document.getElementById('apiKeyInput').value     = apiKey;
+        if (apiKey)   document.getElementById('apiKeyInput').value        = apiKey;
         if (defFoldr) document.getElementById('defaultFolderInput').value = defFoldr;
-        if (defFoldr) document.getElementById('folderId').value        = defFoldr;
+
+        // ?carpetaId= overrides saved folder
+        if (CARPETA_PARAM) {
+            document.getElementById('folderId').value = CARPETA_PARAM;
+        } else if (defFoldr) {
+            document.getElementById('folderId').value = defFoldr;
+        }
+
+        if (PROYECTO_PARAM) {
+            // Show project banner and load catalog from App Script
+            document.getElementById('projectBanner').classList.add('visible');
+            document.getElementById('projectBannerName').textContent = PROYECTO_PARAM;
+            cargarCatalogoProyecto();
+        } else {
+            // No project param: hide catalog status chip
+            document.getElementById('catalogStatus').style.display = 'none';
+        }
+
+        // Auto-load photos if folder ID is already set and API key exists
+        if ((CARPETA_PARAM || defFoldr) && apiKey) {
+            loadFolder();
+        }
     });
+
+    // ── Project catalog from App Script ──────────────────────────────────────
+    async function cargarCatalogoProyecto() {
+        const statusEl = document.getElementById('catalogStatus');
+        statusEl.className = 'catalog-status loading';
+        statusEl.textContent = 'Cargando catálogo…';
+
+        let alguno = false;
+        const espMap = { em: 'EM', civil: 'Civil' };
+
+        for (const [disc, esp] of Object.entries(espMap)) {
+            try {
+                const url = `${CATALOG_SCRIPT_URL}?action=get&proyecto=${encodeURIComponent(PROYECTO_PARAM)}&esp=${esp}&t=${Date.now()}`;
+                const res  = await fetch(url, { redirect: 'follow' });
+                const text = await res.text();
+                let parsed;
+                try { parsed = JSON.parse(text); } catch { parsed = null; }
+                if (parsed && parsed.ok === false) continue;
+                _catalogosDrive[disc] = text;
+                alguno = true;
+            } catch(e) {
+                console.warn('Error cargando catálogo de Drive para', esp, e);
+            }
+        }
+
+        if (alguno) {
+            statusEl.className = 'catalog-status ok';
+            statusEl.textContent = '✓ Catálogo del proyecto';
+            buildCatalogIndex();
+            if (allFiles.length) { annotateAllFiles(); updateUnclassifiedPanel(); }
+        } else {
+            statusEl.className = 'catalog-status err';
+            statusEl.textContent = 'Sin catálogo en Drive';
+        }
+    }
+
+    // ── Parse catalog into full structure (titles separated from options) ─────
+    function parseTopicsFull(txt) {
+        const lines = txt.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        const result = [];
+        let current  = null;
+        for (const line of lines) {
+            const mainMatch = line.match(/^<(.+)>$/);
+            if (mainMatch) {
+                current = { label: mainMatch[1], titles: [], options: [] };
+                result.push(current);
+            } else if (current) {
+                const optMatch = line.match(/^\d+<(.+)>$/);
+                if (optMatch) current.options.push(optMatch[1]);
+                else current.titles.push(line);
+            }
+        }
+        return result;
+    }
+
+    // ── Build classification index from all available catalogs ───────────────
+    // catalogIndex: { 'tema lowercase': Set<'title lowercase'> }
+    function buildCatalogIndex() {
+        catalogIndex = {};
+
+        // From project Drive catalogs (highest priority, separate titles from options)
+        ['civil', 'em'].forEach(disc => {
+            if (!_catalogosDrive[disc]) return;
+            parseTopicsFull(_catalogosDrive[disc]).forEach(t => {
+                const key = t.label.toLowerCase();
+                if (!catalogIndex[key]) catalogIndex[key] = new Set();
+                t.titles.forEach(s => catalogIndex[key].add(s.toLowerCase().trim()));
+                t.options.forEach(s => catalogIndex[key].add(s.toLowerCase().trim()));
+            });
+        });
+
+        // From GitHub-loaded topics (subs mixes titles+options, used as fallback)
+        ['civil', 'em'].forEach(disc => {
+            if (_catalogosDrive[disc] || !driveTopics[disc]) return;
+            driveTopics[disc].forEach(t => {
+                const key = t.label.toLowerCase();
+                if (!catalogIndex[key]) catalogIndex[key] = new Set();
+                (t.subs || []).forEach(s => catalogIndex[key].add(s.toLowerCase().trim()));
+            });
+        });
+    }
+
+    // ── Classify a single file ────────────────────────────────────────────────
+    // Returns: 'ok' | 'sin_formato' | 'tema_desconocido' | 'titulo_no_catalogo'
+    function classifyFile(file) {
+        if (!file.temaPrincipal && !file.fecha) return 'sin_formato';
+        const temaRaw = (file.temaPrincipal || '').split('/')[0].trim();
+        if (!temaRaw) return 'sin_formato';
+        const temaKey = temaRaw.toLowerCase();
+        if (!catalogIndex[temaKey]) return 'tema_desconocido';
+        const titulo = (file.temaSecundario || '').trim().toLowerCase();
+        if (!titulo || !catalogIndex[temaKey].has(titulo)) return 'titulo_no_catalogo';
+        return 'ok';
+    }
+
+    // Annotate all files with their classification status
+    function annotateAllFiles() {
+        if (Object.keys(catalogIndex).length === 0) return;
+        allFiles.forEach(f => { f._classification = classifyFile(f); });
+    }
+
+    // ── Unclassified panel ────────────────────────────────────────────────────
+    function updateUnclassifiedPanel() {
+        if (Object.keys(catalogIndex).length === 0) return;
+        annotateAllFiles();
+        const unclassified = allFiles.filter(f => f._classification !== 'ok');
+        const bar = document.getElementById('unclassifiedBar');
+        if (unclassified.length > 0) {
+            document.getElementById('unclassifiedCount').textContent = unclassified.length;
+            bar.classList.add('visible');
+            renderUnclassifiedTable(unclassified);
+        } else {
+            bar.classList.remove('visible');
+        }
+        applyFilters(); // re-render grid with classification badges
+    }
+
+    function renderUnclassifiedTable(files) {
+        const labels = {
+            sin_formato:        'Sin formato',
+            tema_desconocido:   'Tema desconocido',
+            titulo_no_catalogo: 'Título no en catálogo',
+        };
+        document.getElementById('unclassifiedTableBody').innerHTML = files.map(f => {
+            const temaDetectado = f.temaPrincipal ? f.temaPrincipal.split('/')[0].trim() : '—';
+            const titulo = f.temaSecundario || '—';
+            const status = f._classification || 'sin_formato';
+            return `<tr onclick="openUnclassifiedPhoto('${f.id}')">
+                <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${f.name}">${f.name}</td>
+                <td>${temaDetectado}</td>
+                <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${titulo}</td>
+                <td><span class="unclass-status ${status}">${labels[status] || status}</span></td>
+            </tr>`;
+        }).join('');
+    }
+
+    function toggleUnclassifiedFilter() {
+        showOnlyUnclassified = !showOnlyUnclassified;
+        const btn = document.getElementById('unclassifiedToggle');
+        btn.classList.toggle('active', showOnlyUnclassified);
+        btn.textContent = showOnlyUnclassified ? '× Mostrar todas' : 'Ver solo sin clasificar';
+        applyFilters();
+    }
+
+    function toggleUnclassifiedDetail() {
+        const detail  = document.getElementById('unclassifiedDetail');
+        const btn     = document.getElementById('unclassifiedDetailBtn');
+        const visible = detail.classList.toggle('visible');
+        btn.textContent = visible ? '▴ Ocultar lista' : '▾ Ver lista';
+    }
+
+    function openUnclassifiedPhoto(fileId) {
+        if (!showOnlyUnclassified) {
+            showOnlyUnclassified = true;
+            const btn = document.getElementById('unclassifiedToggle');
+            btn.classList.add('active');
+            btn.textContent = '× Mostrar todas';
+            applyFilters();
+        }
+        const idx = filtered.findIndex(f => f.id === fileId);
+        if (idx >= 0) openLightbox(idx);
+    }
 
     // ── Settings ───────────────────────────────────────────────────────────
     function openSettings() {
@@ -745,11 +1061,20 @@
 
     async function loadTopics(disciplina) {
         if (driveTopics[disciplina]) return driveTopics[disciplina];
+
+        // Project Drive catalog takes priority over GitHub
+        if (_catalogosDrive[disciplina]) {
+            driveTopics[disciplina] = parseTopicsTxt(_catalogosDrive[disciplina]);
+            buildCatalogIndex();
+            return driveTopics[disciplina];
+        }
+
         const url = disciplina === 'civil' ? TOPICS_CIVIL_URL : TOPICS_EM_URL;
         try {
             const res = await fetch(url);
             const txt = await res.text();
             driveTopics[disciplina] = parseTopicsTxt(txt);
+            buildCatalogIndex();
             return driveTopics[disciplina];
         } catch(e) { return []; }
     }
@@ -831,7 +1156,10 @@
             } while (pageToken);
 
             statusBar.classList.remove('active');
+            buildCatalogIndex();
+            annotateAllFiles();
             applyFilters();
+            updateUnclassifiedPanel();
         } catch(err) {
             document.getElementById('statusText').textContent = `Error: ${err.message}`;
         } finally {
@@ -847,6 +1175,7 @@
         const hasta      = document.getElementById('fechaHasta').value.replace(/-/g,'');
 
         filtered = allFiles.filter(f => {
+            if (showOnlyUnclassified && f._classification === 'ok') return false;
             if (principal) {
                 if (!f.temaPrincipal) return false;
                 if (!f.temaPrincipal.toLowerCase().includes(principal) &&
@@ -914,10 +1243,14 @@
             ? f.thumbnailLink.replace(/=s\d+/, '=s320')
             : `https://drive.google.com/thumbnail?id=${f.id}&sz=w320&key=${apiKey}`;
 
+        const isUnclassified = f._classification && f._classification !== 'ok';
+        const statusLabel = { sin_formato: 'SIN FMT', tema_desconocido: 'TEMA?', titulo_no_catalogo: 'TÍTULO?' };
+
         return `
-        <div class="photo-card" onclick="openLightbox(${f._idx})" title="${f.temaSecundario}">
+        <div class="photo-card${isUnclassified ? ' unclassified' : ''}" onclick="openLightbox(${f._idx})" title="${f.temaSecundario}">
             <img src="${thumb}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%231e2436%22 width=%22100%22 height=%22100%22/><text y=%2255%22 x=%2250%22 text-anchor=%22middle%22 font-size=%2228%22>📷</text></svg>'">
             <div class="overlay"></div>
+            ${isUnclassified ? `<div class="unclassified-icon">⚠ ${statusLabel[f._classification] || '?'}</div>` : ''}
             <div class="zoom-icon">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
             </div>
