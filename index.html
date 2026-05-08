@@ -354,7 +354,7 @@
 
         #lbImg {
             max-width: 100%;
-            max-height: calc(100vh - 130px);
+            max-height: calc(100vh - 210px);
             border-radius: 10px;
             object-fit: contain;
             box-shadow: 0 30px 80px rgba(0,0,0,.6);
@@ -611,6 +611,164 @@
         .unclass-status.tema_desconocido   { background: rgba(251,146,60,0.15);  color: #fb923c; }
         .unclass-status.titulo_no_catalogo { background: rgba(234,179,8,0.15);   color: #eab308; }
 
+        /* ── LIGHTBOX ACTIONS ── */
+        .lb-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .lb-action-btn {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s;
+            border: 1px solid;
+            white-space: nowrap;
+        }
+        .lb-action-btn.secondary {
+            border-color: var(--border);
+            background: rgba(255,255,255,.06);
+            color: var(--text-dim);
+        }
+        .lb-action-btn.secondary:hover {
+            background: rgba(255,255,255,.12);
+            border-color: var(--border-hover);
+            color: var(--text);
+        }
+        .lb-action-btn.danger {
+            border-color: rgba(239,68,68,.35);
+            background: rgba(239,68,68,.08);
+            color: #f87171;
+        }
+        .lb-action-btn.danger:hover {
+            background: rgba(239,68,68,.18);
+            border-color: rgba(239,68,68,.7);
+        }
+        .lb-action-btn.success {
+            border-color: rgba(34,197,94,.35);
+            background: rgba(34,197,94,.08);
+            color: var(--green);
+        }
+        .lb-action-btn.success:hover {
+            background: rgba(34,197,94,.18);
+            border-color: var(--green);
+        }
+        .lb-delete-confirm {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: rgba(239,68,68,.1);
+            border: 1px solid rgba(239,68,68,.3);
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #fca5a5;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .lb-delete-confirm.visible { display: flex; }
+        .lb-toast {
+            margin-top: 8px;
+            padding: 5px 14px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-family: 'DM Mono', monospace;
+            opacity: 0;
+            transition: opacity .3s;
+            pointer-events: none;
+            min-height: 24px;
+        }
+        .lb-toast.visible { opacity: 1; }
+        .lb-toast.ok  { background: rgba(34,197,94,.15);  color: var(--green); }
+        .lb-toast.err { background: rgba(239,68,68,.15);  color: #f87171; }
+
+        /* ── RETAG MODAL ── */
+        #retagModal {
+            display: none;
+            position: fixed; inset: 0; z-index: 400;
+            background: rgba(5,7,12,.82);
+            backdrop-filter: blur(10px);
+            align-items: center; justify-content: center;
+        }
+        #retagModal.open { display: flex; animation: lbIn .15s ease; }
+        .retag-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            width: 100%; max-width: 460px;
+            padding: 28px;
+            box-shadow: 0 40px 80px rgba(0,0,0,.5);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .retag-title {
+            font-size: 16px; font-weight: 600; color: var(--text);
+            margin-bottom: 20px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .retag-field { margin-bottom: 14px; }
+        .retag-field .field-label { margin-bottom: 5px; display: block; }
+        .retag-field .field-input  { width: 100%; }
+        .retag-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .retag-save {
+            flex: 1; padding: 10px;
+            background: var(--green); border: none; border-radius: 10px;
+            color: #0a1a0f; font-family: 'DM Sans', sans-serif;
+            font-weight: 700; font-size: 14px; cursor: pointer;
+            transition: opacity .15s;
+        }
+        .retag-save:hover { opacity: .9; }
+        .retag-save:disabled { opacity: .4; cursor: not-allowed; }
+        .retag-cancel {
+            padding: 10px 20px;
+            background: none; border: 1px solid var(--border);
+            border-radius: 10px; color: var(--text-muted);
+            font-family: 'DM Sans', sans-serif; font-size: 13px;
+            cursor: pointer; transition: all .15s;
+        }
+        .retag-cancel:hover { border-color: var(--border-hover); color: var(--text); }
+        .retag-status {
+            font-size: 11px; text-align: center; margin-top: 10px;
+            font-family: 'DM Mono', monospace; min-height: 16px;
+        }
+        .retag-status.ok  { color: var(--green); }
+        .retag-status.err { color: #f87171; }
+        .retag-sugeridos {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 4px;
+        }
+        .retag-sugerido-chip {
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg);
+            color: var(--text-dim);
+            font-size: 11px;
+            font-family: 'DM Mono', monospace;
+            cursor: pointer;
+            transition: all .15s;
+            user-select: none;
+        }
+        .retag-sugerido-chip:hover {
+            border-color: var(--green);
+            color: var(--green);
+            background: var(--green-dim);
+        }
+        .retag-sugerido-chip.active {
+            border-color: var(--green);
+            color: var(--green);
+            background: var(--green-dim);
+        }
+
         /* Keyboard hint */
         .kb-hint {
             position: fixed;
@@ -677,12 +835,8 @@
             <option value="">— Elige disciplina —</option>
         </select>
     </div>
-    <div class="field-group">
-        <label class="field-label">Tema secundario</label>
-        <select id="temaSec" class="field-input" onchange="applyFilters()" style="min-width:180px;">
-            <option value="">— Todos —</option>
-        </select>
-    </div>
+    <!-- Dynamic option level selects are injected here when a tema is chosen -->
+    <div id="opcionesNiveles" style="display:contents;"></div>
     <div class="field-group">
         <label class="field-label">Desde</label>
         <input type="date" id="fechaDesde" class="field-input" onchange="applyFilters()">
@@ -748,7 +902,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
     </button>
 
-    <div style="display:flex; flex-direction:column; align-items:center; max-width:calc(100vw - 140px);">
+    <div style="display:flex; flex-direction:column; align-items:center; max-width:calc(100vw - 140px); max-height:calc(100vh - 30px); overflow-y:auto;">
         <div class="lb-img-container">
             <img id="lbImg" src="" alt="">
             <div class="lb-spinner" id="lbSpinner">
@@ -764,6 +918,28 @@
                 Abrir en Drive
             </a>
         </div>
+
+        <!-- Action buttons -->
+        <div class="lb-actions" id="lbActions">
+            <button class="lb-action-btn secondary" onclick="reclasificarFoto()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Reclasificar
+            </button>
+            <button class="lb-action-btn success" id="lbAddCatalogBtn" onclick="agregarAlCatalogo()" style="display:none;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Agregar al catálogo
+            </button>
+            <button class="lb-action-btn danger" onclick="mostrarConfirmDelete()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                Eliminar
+            </button>
+        </div>
+        <div class="lb-delete-confirm" id="lbDeleteConfirm">
+            <span>¿Eliminar esta foto?</span>
+            <button class="lb-action-btn danger" onclick="confirmarEliminar()">Sí, eliminar</button>
+            <button class="lb-action-btn secondary" onclick="cancelarEliminar()">Cancelar</button>
+        </div>
+        <div id="lbToast" class="lb-toast"></div>
     </div>
 
     <button class="lb-nav lb-next" id="lbNext" onclick="lbNavigate(1)">
@@ -796,7 +972,51 @@
             <p class="settings-note">Se carga automáticamente al abrir la página.</p>
         </div>
 
+        <div class="settings-field">
+            <label class="field-label">URL Script de Operaciones (Renombrar / Eliminar)</label>
+            <input type="text" id="mgmtScriptInput" class="field-input" placeholder="https://script.google.com/macros/s/…" style="width:100%; font-size:10px;">
+            <p class="settings-note">URL del nuevo App Script <strong>CodigoFileOperations</strong> para renombrar y eliminar fotos en Drive.</p>
+        </div>
+
         <button class="settings-save" onclick="saveSettings()">Guardar</button>
+    </div>
+</div>
+
+<!-- RETAG MODAL -->
+<div id="retagModal">
+    <div class="retag-box">
+        <div class="retag-title">
+            Reclasificar foto
+            <button class="settings-close" onclick="closeRetag()">×</button>
+        </div>
+        <div class="retag-field">
+            <label class="field-label">Disciplina</label>
+            <select id="retagDisciplina" class="field-input" onchange="onRetagDisciplinaChange()">
+                <option value="">— Seleccionar —</option>
+                <option value="civil">Civil</option>
+                <option value="em">Electromecánica</option>
+            </select>
+        </div>
+        <div class="retag-field">
+            <label class="field-label">Tema</label>
+            <select id="retagTema" class="field-input" onchange="onRetagTemaChange()">
+                <option value="">— Elige disciplina —</option>
+            </select>
+        </div>
+        <div id="retagNiveles"></div>
+        <div class="retag-field" id="retagSugeridosField" style="display:none;">
+            <label class="field-label">Títulos del catálogo</label>
+            <div class="retag-sugeridos" id="retagSugeridos"></div>
+        </div>
+        <div class="retag-field">
+            <label class="field-label">Título</label>
+            <input type="text" id="retagTitulo" class="field-input" placeholder="Ej: Vista frontal…">
+        </div>
+        <div class="retag-actions">
+            <button class="retag-cancel" onclick="closeRetag()">Cancelar</button>
+            <button class="retag-save" onclick="guardarReclasificacion()">Guardar</button>
+        </div>
+        <div class="retag-status" id="retagStatus"></div>
     </div>
 </div>
 
@@ -818,13 +1038,16 @@
     const _catalogosDrive    = {};  // { 'civil': rawTxt, 'em': rawTxt } from project App Script
     let catalogIndex         = {};  // { 'tema lowercase': Set<'title lowercase'> }
     let showOnlyUnclassified = false;
+    let MGMT_SCRIPT_URL      = localStorage.getItem('viewer_mgmt_url') || '';
 
     // ── Init ───────────────────────────────────────────────────────────────
     window.addEventListener('DOMContentLoaded', () => {
         const apiKey   = localStorage.getItem('viewer_api_key') || '';
         const defFoldr = localStorage.getItem('viewer_folder')  || '';
-        if (apiKey)   document.getElementById('apiKeyInput').value        = apiKey;
-        if (defFoldr) document.getElementById('defaultFolderInput').value = defFoldr;
+        const mgmtUrl  = localStorage.getItem('viewer_mgmt_url') || '';
+        if (apiKey)   document.getElementById('apiKeyInput').value          = apiKey;
+        if (defFoldr) document.getElementById('defaultFolderInput').value   = defFoldr;
+        if (mgmtUrl)  document.getElementById('mgmtScriptInput').value      = mgmtUrl;
 
         // ?carpetaId= overrides saved folder
         if (CARPETA_PARAM) {
@@ -876,15 +1099,38 @@
         if (alguno) {
             statusEl.className = 'catalog-status ok';
             statusEl.textContent = '✓ Catálogo del proyecto';
+
+            // Pre-cache driveTopics so onDisciplinaChange never needs a GitHub fallback
+            ['civil', 'em'].forEach(disc => {
+                if (_catalogosDrive[disc]) driveTopics[disc] = parseTopicsTxt(_catalogosDrive[disc]);
+            });
+
             buildCatalogIndex();
             if (allFiles.length) { annotateAllFiles(); updateUnclassifiedPanel(); }
+
+            // If the user already selected a discipline before the catalog finished loading,
+            // refresh the tema dropdown with the now-available catalog
+            const discSel = document.getElementById('disciplina').value;
+            if (discSel && driveTopics[discSel]) {
+                const mainSel  = document.getElementById('temaPrincipal');
+                const prevVal  = mainSel.value;
+                mainSel.innerHTML = '<option value="">— Todos —</option>';
+                driveTopics[discSel].forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.label; opt.textContent = t.label;
+                    mainSel.appendChild(opt);
+                });
+                if (prevVal) mainSel.value = prevVal;
+                applyFilters();
+            }
         } else {
             statusEl.className = 'catalog-status err';
             statusEl.textContent = 'Sin catálogo en Drive';
         }
     }
 
-    // ── Parse catalog into full structure (titles separated from options) ─────
+    // ── Parse catalog into full structure (titles separated from options-by-level) ─
+    // Returns: [{ label, titles: [], optionsByLevel: { '1': [], '2': [] } }]
     function parseTopicsFull(txt) {
         const lines = txt.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
         const result = [];
@@ -892,12 +1138,18 @@
         for (const line of lines) {
             const mainMatch = line.match(/^<(.+)>$/);
             if (mainMatch) {
-                current = { label: mainMatch[1], titles: [], options: [] };
+                current = { label: mainMatch[1], titles: [], optionsByLevel: {} };
                 result.push(current);
             } else if (current) {
-                const optMatch = line.match(/^\d+<(.+)>$/);
-                if (optMatch) current.options.push(optMatch[1]);
-                else current.titles.push(line);
+                const optMatch = line.match(/^(\d+)<(.+)>$/);
+                if (optMatch) {
+                    const lvl  = optMatch[1];
+                    const text = optMatch[2];
+                    if (!current.optionsByLevel[lvl]) current.optionsByLevel[lvl] = [];
+                    current.optionsByLevel[lvl].push(text);
+                } else {
+                    current.titles.push(line);
+                }
             }
         }
         return result;
@@ -908,14 +1160,16 @@
     function buildCatalogIndex() {
         catalogIndex = {};
 
-        // From project Drive catalogs (highest priority, separate titles from options)
+        // From project Drive catalogs (highest priority)
         ['civil', 'em'].forEach(disc => {
             if (!_catalogosDrive[disc]) return;
             parseTopicsFull(_catalogosDrive[disc]).forEach(t => {
                 const key = t.label.toLowerCase();
                 if (!catalogIndex[key]) catalogIndex[key] = new Set();
                 t.titles.forEach(s => catalogIndex[key].add(s.toLowerCase().trim()));
-                t.options.forEach(s => catalogIndex[key].add(s.toLowerCase().trim()));
+                Object.values(t.optionsByLevel || {}).forEach(opts =>
+                    opts.forEach(s => catalogIndex[key].add(s.toLowerCase().trim()))
+                );
             });
         });
 
@@ -931,10 +1185,13 @@
     }
 
     // ── Classify a single file ────────────────────────────────────────────────
+    // Filename format from uploader: {fecha}_{titulo} ({tema}-{opcion1}-{opcion2})_{seq}.jpg
+    // temaPrincipal = content of parentheses → "tema-opcion1-opcion2" (dash-separated)
     // Returns: 'ok' | 'sin_formato' | 'tema_desconocido' | 'titulo_no_catalogo'
     function classifyFile(file) {
         if (!file.temaPrincipal && !file.fecha) return 'sin_formato';
-        const temaRaw = (file.temaPrincipal || '').split('/')[0].trim();
+        const parts   = (file.temaPrincipal || '').split('-');
+        const temaRaw = parts[0].trim();
         if (!temaRaw) return 'sin_formato';
         const temaKey = temaRaw.toLowerCase();
         if (!catalogIndex[temaKey]) return 'tema_desconocido';
@@ -1021,8 +1278,11 @@
     function saveSettings() {
         const k = document.getElementById('apiKeyInput').value.trim();
         const f = document.getElementById('defaultFolderInput').value.trim();
-        localStorage.setItem('viewer_api_key', k);
-        localStorage.setItem('viewer_folder',  f);
+        const m = document.getElementById('mgmtScriptInput').value.trim();
+        localStorage.setItem('viewer_api_key',  k);
+        localStorage.setItem('viewer_folder',   f);
+        localStorage.setItem('viewer_mgmt_url', m);
+        MGMT_SCRIPT_URL = m;
         if (f) document.getElementById('folderId').value = f;
         closeSettings();
     }
@@ -1050,10 +1310,21 @@
         let current = null;
         for (const line of lines) {
             const mainMatch = line.match(/^<(.+)>$/);
-            if (mainMatch) { current = { label: mainMatch[1], subs: [] }; result.push(current); }
-            else if (current) {
-                const sub = line.match(/^\d+<(.+)>$/) || line.match(/^<(.+)>$/);
-                current.subs.push(sub ? sub[1] : line);
+            if (mainMatch) {
+                current = { label: mainMatch[1], subs: [], optionsByLevel: {} };
+                result.push(current);
+            } else if (current) {
+                const optMatch = line.match(/^(\d+)<(.+)>$/);
+                if (optMatch) {
+                    const lvl = optMatch[1];
+                    const text = optMatch[2];
+                    current.subs.push(text);
+                    if (!current.optionsByLevel[lvl]) current.optionsByLevel[lvl] = [];
+                    current.optionsByLevel[lvl].push(text);
+                } else {
+                    const sub = line.match(/^<(.+)>$/);
+                    current.subs.push(sub ? sub[1] : line);
+                }
             }
         }
         return result;
@@ -1076,15 +1347,22 @@
             driveTopics[disciplina] = parseTopicsTxt(txt);
             buildCatalogIndex();
             return driveTopics[disciplina];
-        } catch(e) { return []; }
+        } catch(e) {
+            // GitHub fetch failed (common from file:// origin).
+            // Check Drive cache one more time in case it loaded during the fetch attempt.
+            if (_catalogosDrive[disciplina]) {
+                driveTopics[disciplina] = parseTopicsTxt(_catalogosDrive[disciplina]);
+                return driveTopics[disciplina];
+            }
+            return [];
+        }
     }
 
     async function onDisciplinaChange() {
         const disc    = document.getElementById('disciplina').value;
         const mainSel = document.getElementById('temaPrincipal');
-        const secSel  = document.getElementById('temaSec');
         mainSel.innerHTML = '<option value="">— Todos —</option>';
-        secSel.innerHTML  = '<option value="">— Todos —</option>';
+        document.getElementById('opcionesNiveles').innerHTML = '';
         if (!disc) { applyFilters(); return; }
         const topics = await loadTopics(disc);
         topics.forEach(t => {
@@ -1096,20 +1374,70 @@
     }
 
     async function onTemaPrincipalChange() {
-        const disc   = document.getElementById('disciplina').value;
-        const main   = document.getElementById('temaPrincipal').value;
-        const secSel = document.getElementById('temaSec');
-        secSel.innerHTML = '<option value="">— Todos —</option>';
+        const disc      = document.getElementById('disciplina').value;
+        const main      = document.getElementById('temaPrincipal').value;
+        const container = document.getElementById('opcionesNiveles');
+        container.innerHTML = '';
+
         if (!disc || !main) { applyFilters(); return; }
+
         const topics = await loadTopics(disc);
         const found  = topics.find(t => t.label === main);
-        if (found) {
-            found.subs.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s; opt.textContent = s;
-                secSel.appendChild(opt);
+
+        // Render one select per option level from the catalog
+        if (found && found.optionsByLevel) {
+            Object.keys(found.optionsByLevel).sort().forEach(lvl => {
+                const opciones = found.optionsByLevel[lvl];
+                const group = document.createElement('div');
+                group.className = 'field-group';
+
+                const label = document.createElement('label');
+                label.className = 'field-label';
+                label.textContent = `NIVEL ${lvl}`;
+
+                const sel = document.createElement('select');
+                sel.className  = 'field-input';
+                sel.dataset.level = lvl;
+                sel.style.minWidth = '140px';
+                sel.innerHTML  = '<option value="">— Todos —</option>' +
+                    opciones.map(o => `<option value="${o}">${o}</option>`).join('');
+                sel.addEventListener('change', applyFilters);
+
+                group.appendChild(label);
+                group.appendChild(sel);
+                container.appendChild(group);
             });
         }
+
+        // Render TÍTULO dropdown if the tema has plain-text catalog titles
+        if (found) {
+            const optionValues = new Set();
+            Object.values(found.optionsByLevel || {}).forEach(opts =>
+                opts.forEach(o => optionValues.add(o))
+            );
+            const plainTitles = (found.subs || []).filter(s => !optionValues.has(s));
+            if (plainTitles.length > 0) {
+                const group = document.createElement('div');
+                group.className = 'field-group';
+
+                const label = document.createElement('label');
+                label.className = 'field-label';
+                label.textContent = 'TÍTULO';
+
+                const sel = document.createElement('select');
+                sel.className = 'field-input';
+                sel.dataset.type = 'titulo';
+                sel.style.minWidth = '180px';
+                sel.innerHTML = '<option value="">— Todos —</option>' +
+                    plainTitles.map(t => `<option value="${t}">${t}</option>`).join('');
+                sel.addEventListener('change', applyFilters);
+
+                group.appendChild(label);
+                group.appendChild(sel);
+                container.appendChild(group);
+            }
+        }
+
         applyFilters();
     }
 
@@ -1169,22 +1497,54 @@
 
     // ── Apply filters & render ─────────────────────────────────────────────
     function applyFilters() {
-        const principal  = document.getElementById('temaPrincipal').value.toLowerCase().trim();
-        const secundario = document.getElementById('temaSec').value.toLowerCase().trim();
-        const desde      = document.getElementById('fechaDesde').value.replace(/-/g,'');
-        const hasta      = document.getElementById('fechaHasta').value.replace(/-/g,'');
+        const disc      = document.getElementById('disciplina').value;
+        const principal = document.getElementById('temaPrincipal').value.toLowerCase().trim();
+        const desde     = document.getElementById('fechaDesde').value.replace(/-/g,'');
+        const hasta     = document.getElementById('fechaHasta').value.replace(/-/g,'');
+
+        // Build a Set of tema labels that belong to the selected discipline (for fast lookup)
+        const discTopicLabels = (disc && driveTopics[disc])
+            ? new Set(driveTopics[disc].map(t => t.label.toLowerCase()))
+            : null;
+
+        // Collect active option-level filters (excludes the título select)
+        const nivelFiltros = Array.from(
+            document.querySelectorAll('#opcionesNiveles select:not([data-type="titulo"])')
+        ).map(s => s.value.toLowerCase().trim());
+
+        // Título filter (plain-text catalog title)
+        const tituloSelEl = document.querySelector('#opcionesNiveles select[data-type="titulo"]');
+        const tituloFiltro = tituloSelEl ? tituloSelEl.value.trim().toLowerCase() : '';
 
         filtered = allFiles.filter(f => {
             if (showOnlyUnclassified && f._classification === 'ok') return false;
+
+            // temaPrincipal in filename = "tema-opcion1-opcion2-..." (dash-separated)
+            const partsP   = (f.temaPrincipal || '').split('-');
+            const temaFile = (partsP[0] || '').toLowerCase().trim();
+
+            // Discipline filter: keep only photos whose tema belongs to the chosen discipline
+            if (discTopicLabels && !discTopicLabels.has(temaFile)) return false;
+
+            // Specific tema filter
             if (principal) {
-                if (!f.temaPrincipal) return false;
-                if (!f.temaPrincipal.toLowerCase().includes(principal) &&
-                    !principal.includes(f.temaPrincipal.toLowerCase())) return false;
+                if (!temaFile.includes(principal) && !principal.includes(temaFile)) return false;
             }
-            if (secundario) {
-                if (!f.temaSecundario.toLowerCase().includes(secundario) &&
-                    !secundario.includes(f.temaSecundario.toLowerCase())) return false;
+
+            // Each option-level select corresponds to partsP[i+1] (partsP[0] is the tema)
+            for (let i = 0; i < nivelFiltros.length; i++) {
+                const val = nivelFiltros[i];
+                if (!val) continue;
+                const partVal = (partsP[i + 1] || '').toLowerCase().trim();
+                if (!partVal.includes(val) && !val.includes(partVal)) return false;
             }
+
+            // Título filter: match against the photo's title (temaSecundario)
+            if (tituloFiltro) {
+                const fTitulo = (f.temaSecundario || '').trim().toLowerCase();
+                if (fTitulo !== tituloFiltro) return false;
+            }
+
             if (desde && f.fecha && f.fecha < desde) return false;
             if (hasta && f.fecha && f.fecha > hasta) return false;
             return true;
@@ -1318,6 +1678,8 @@
         // Nav buttons
         document.getElementById('lbPrev').disabled = idx === 0;
         document.getElementById('lbNext').disabled = idx === filtered.length - 1;
+
+        updateLbActions(f);
     }
 
     // Keyboard navigation
@@ -1338,6 +1700,382 @@
     document.getElementById('settingsModal').addEventListener('click', function(e) {
         if (e.target === this) closeSettings();
     });
+
+    // Retag modal outside click
+    document.getElementById('retagModal').addEventListener('click', function(e) {
+        if (e.target === this) closeRetag();
+    });
+
+    // ── Lightbox action helpers ──────────────────────────────────────────────
+    function updateLbActions(f) {
+        // "Agregar al catálogo" only when the title isn't in the catalog yet
+        const addBtn = document.getElementById('lbAddCatalogBtn');
+        addBtn.style.display = (f && f._classification === 'titulo_no_catalogo') ? '' : 'none';
+        // Reset delete confirm state
+        document.getElementById('lbDeleteConfirm').classList.remove('visible');
+        document.getElementById('lbActions').style.display = '';
+        document.getElementById('lbToast').className = 'lb-toast';
+    }
+
+    let _toastTimer = null;
+    function showLbToast(msg, type = 'ok') {
+        const el = document.getElementById('lbToast');
+        el.textContent = msg;
+        el.className   = `lb-toast ${type} visible`;
+        clearTimeout(_toastTimer);
+        _toastTimer = setTimeout(() => { el.className = 'lb-toast'; }, 3500);
+    }
+
+    // ── Delete ───────────────────────────────────────────────────────────────
+    function mostrarConfirmDelete() {
+        document.getElementById('lbDeleteConfirm').classList.add('visible');
+        document.getElementById('lbActions').style.display = 'none';
+    }
+
+    function cancelarEliminar() {
+        document.getElementById('lbDeleteConfirm').classList.remove('visible');
+        document.getElementById('lbActions').style.display = '';
+    }
+
+    async function confirmarEliminar() {
+        if (!MGMT_SCRIPT_URL) {
+            cancelarEliminar();
+            showLbToast('⚠ Configura la URL del Script de Operaciones en Configuración', 'err');
+            return;
+        }
+        const f = filtered[lbIndex];
+        if (!f) return;
+
+        try {
+            const url  = `${MGMT_SCRIPT_URL}?action=delete&fileId=${encodeURIComponent(f.id)}&t=${Date.now()}`;
+            const res  = await fetch(url, { redirect: 'follow' });
+            const data = await res.json();
+            if (!data.ok) throw new Error(data.error || 'Error desconocido');
+
+            allFiles = allFiles.filter(x => x.id !== f.id);
+            filtered = filtered.filter(x => x.id !== f.id);
+
+            cancelarEliminar();
+            applyFilters();
+            updateUnclassifiedPanel();
+
+            if (filtered.length === 0) {
+                closeLightbox();
+            } else {
+                lbIndex = Math.min(lbIndex, filtered.length - 1);
+                loadLbPhoto(lbIndex);
+                showLbToast('✓ Foto enviada a la papelera');
+            }
+        } catch(err) {
+            cancelarEliminar();
+            showLbToast('Error al eliminar: ' + err.message, 'err');
+        }
+    }
+
+    // ── Re-tag modal ─────────────────────────────────────────────────────────
+    async function reclasificarFoto() {
+        const f = filtered[lbIndex];
+        if (!f) return;
+
+        document.getElementById('retagTitulo').value     = f.temaSecundario || '';
+        document.getElementById('retagStatus').className = 'retag-status';
+        document.getElementById('retagStatus').textContent = '';
+        document.getElementById('retagNiveles').innerHTML = '';
+        document.getElementById('retagSugeridos').innerHTML = '';
+        document.getElementById('retagSugeridosField').style.display = 'none';
+
+        const partsP  = (f.temaPrincipal || '').split('-');
+        const temaRaw = partsP[0].trim();
+        const disc    = getDiscFromTema(temaRaw);
+
+        document.getElementById('retagDisciplina').value = disc || '';
+
+        const temaSel = document.getElementById('retagTema');
+        temaSel.innerHTML = '<option value="">— Seleccionar —</option>';
+
+        if (disc) {
+            const topics = await loadTopics(disc);
+            topics.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.label; opt.textContent = t.label;
+                temaSel.appendChild(opt);
+            });
+            // Pre-select tema
+            const match = Array.from(temaSel.options).find(
+                o => o.value.toLowerCase() === temaRaw.toLowerCase()
+            );
+            if (match) {
+                temaSel.value = match.value;
+                const found = topics.find(t => t.label === temaSel.value);
+                if (found) {
+                    populateRetagNiveles(found, partsP);
+                    populateRetagSugeridos(found, f.temaSecundario);
+                }
+            }
+        } else {
+            temaSel.innerHTML = '<option value="">— Elige disciplina —</option>';
+        }
+
+        document.getElementById('retagModal').classList.add('open');
+    }
+
+    function populateRetagNiveles(topicEntry, partsP) {
+        const container = document.getElementById('retagNiveles');
+        container.innerHTML = '';
+        if (!topicEntry.optionsByLevel) return;
+        Object.keys(topicEntry.optionsByLevel).sort().forEach((lvl, i) => {
+            const opciones = topicEntry.optionsByLevel[lvl];
+            const field = document.createElement('div');
+            field.className = 'retag-field';
+            const label = document.createElement('label');
+            label.className = 'field-label';
+            label.textContent = `NIVEL ${lvl}`;
+            const sel = document.createElement('select');
+            sel.className = 'field-input';
+            sel.dataset.level = lvl;
+            sel.innerHTML = '<option value="">— Sin especificar —</option>' +
+                opciones.map(o => `<option value="${o}">${o}</option>`).join('');
+            // Pre-select from current filename
+            const curVal = (partsP[i + 1] || '').trim();
+            if (curVal) {
+                const m = opciones.find(o => o.toLowerCase() === curVal.toLowerCase());
+                if (m) sel.value = m;
+            }
+            field.appendChild(label);
+            field.appendChild(sel);
+            container.appendChild(field);
+        });
+    }
+
+    function populateRetagSugeridos(topicEntry, currentTitulo) {
+        const field     = document.getElementById('retagSugeridosField');
+        const container = document.getElementById('retagSugeridos');
+
+        // parseTopicsTxt mixes plain titles and option values in subs[].
+        // Recover plain titles by subtracting all optionsByLevel values.
+        let titles = topicEntry.titles;
+        if (!titles) {
+            const optionValues = new Set();
+            Object.values(topicEntry.optionsByLevel || {}).forEach(opts =>
+                opts.forEach(o => optionValues.add(o))
+            );
+            titles = (topicEntry.subs || []).filter(s => !optionValues.has(s));
+        }
+
+        container.innerHTML = '';
+        if (titles.length === 0) { field.style.display = 'none'; return; }
+
+        const curLow = (currentTitulo || '').trim().toLowerCase();
+        titles.forEach(t => {
+            const chip = document.createElement('span');
+            chip.className = 'retag-sugerido-chip';
+            chip.textContent = t;
+            if (curLow && t.toLowerCase() === curLow) chip.classList.add('active');
+            chip.onclick = () => {
+                document.getElementById('retagTitulo').value = t;
+                container.querySelectorAll('.retag-sugerido-chip')
+                    .forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+            };
+            container.appendChild(chip);
+        });
+        field.style.display = '';
+    }
+
+    function closeRetag() {
+        document.getElementById('retagModal').classList.remove('open');
+    }
+
+    async function onRetagDisciplinaChange() {
+        const disc    = document.getElementById('retagDisciplina').value;
+        const temaSel = document.getElementById('retagTema');
+        temaSel.innerHTML = '<option value="">— Seleccionar —</option>';
+        document.getElementById('retagNiveles').innerHTML = '';
+        document.getElementById('retagSugeridos').innerHTML = '';
+        document.getElementById('retagSugeridosField').style.display = 'none';
+        if (!disc) return;
+        const topics = await loadTopics(disc);
+        topics.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.label; opt.textContent = t.label;
+            temaSel.appendChild(opt);
+        });
+    }
+
+    async function onRetagTemaChange() {
+        const disc = document.getElementById('retagDisciplina').value;
+        const main = document.getElementById('retagTema').value;
+        document.getElementById('retagNiveles').innerHTML = '';
+        document.getElementById('retagSugeridos').innerHTML = '';
+        document.getElementById('retagSugeridosField').style.display = 'none';
+        if (!disc || !main) return;
+        const topics = await loadTopics(disc);
+        const found  = topics.find(t => t.label === main);
+        if (found) {
+            populateRetagNiveles(found, []);
+            populateRetagSugeridos(found, '');
+        }
+    }
+
+    async function guardarReclasificacion() {
+        if (!MGMT_SCRIPT_URL) {
+            const s = document.getElementById('retagStatus');
+            s.className = 'retag-status err';
+            s.textContent = 'Configura la URL del Script de Operaciones en Configuración';
+            return;
+        }
+        const titulo = document.getElementById('retagTitulo').value.trim();
+        const tema   = document.getElementById('retagTema').value.trim();
+        if (!titulo) {
+            const s = document.getElementById('retagStatus');
+            s.className = 'retag-status err';
+            s.textContent = 'El título es obligatorio';
+            return;
+        }
+        const f = filtered[lbIndex];
+        if (!f) return;
+
+        // Extract extension and sequence number from original filename
+        const extMatch  = f.name.match(/\.([^.]+)$/);
+        const ext       = extMatch ? extMatch[1] : 'jpg';
+        const seqMatch  = f.name.replace(/\.[^.]+$/, '').match(/_(\d+)$/);
+        const seq       = seqMatch ? seqMatch[1] : '1';
+
+        const niveles    = Array.from(document.querySelectorAll('#retagNiveles select'))
+                               .map(s => s.value.trim()).filter(Boolean);
+        const partesTema = tema ? [tema, ...niveles].join('-') : '';
+
+        let newName;
+        if (f.fecha && partesTema) {
+            newName = `${f.fecha}_${titulo} (${partesTema})_${seq}.${ext}`;
+        } else if (f.fecha) {
+            newName = `${f.fecha}_${titulo}_${seq}.${ext}`;
+        } else {
+            newName = `${titulo}.${ext}`;
+        }
+
+        const statusEl = document.getElementById('retagStatus');
+        statusEl.className = 'retag-status';
+        statusEl.textContent = 'Guardando…';
+
+        try {
+            const url  = `${MGMT_SCRIPT_URL}?action=rename&fileId=${encodeURIComponent(f.id)}&newName=${encodeURIComponent(newName)}&t=${Date.now()}`;
+            const res  = await fetch(url, { redirect: 'follow' });
+            const data = await res.json();
+            if (!data.ok) throw new Error(data.error || 'Error desconocido');
+
+            const parsed = parseFilename(newName);
+            const update = { name: newName, ...parsed };
+            const inAll  = allFiles.find(x => x.id === f.id);
+            const inFilt = filtered.find(x => x.id === f.id);
+            if (inAll)  Object.assign(inAll,  update);
+            if (inFilt) Object.assign(inFilt, update);
+
+            annotateAllFiles();
+            loadLbPhoto(lbIndex);
+            updateUnclassifiedPanel();
+            renderGrid();
+
+            statusEl.className = 'retag-status ok';
+            statusEl.textContent = '✓ Nombre actualizado';
+            setTimeout(() => closeRetag(), 1400);
+
+        } catch(err) {
+            statusEl.className = 'retag-status err';
+            statusEl.textContent = 'Error: ' + err.message;
+        }
+    }
+
+    // ── Add title to catalog (only when title not yet in catalog) ────────────
+    async function agregarAlCatalogo() {
+        const f = filtered[lbIndex];
+        if (!f || f._classification !== 'titulo_no_catalogo') return;
+
+        if (!PROYECTO_PARAM) {
+            showLbToast('⚠ Se requiere parámetro ?proyecto= para guardar en el catálogo', 'err');
+            return;
+        }
+        const temaRaw = (f.temaPrincipal || '').split('-')[0].trim();
+        const titulo  = (f.temaSecundario || '').trim();
+        if (!temaRaw || !titulo) return;
+
+        // Verify the title is genuinely absent before writing
+        const temaKey = temaRaw.toLowerCase();
+        if (catalogIndex[temaKey] && catalogIndex[temaKey].has(titulo.toLowerCase())) {
+            showLbToast('El título ya existe en el catálogo', 'ok');
+            f._classification = classifyFile(f);
+            updateLbActions(f);
+            return;
+        }
+
+        const disc = getDiscFromTema(temaRaw);
+        if (!disc) {
+            showLbToast('⚠ No se identificó la disciplina del tema', 'err');
+            return;
+        }
+        const esp = disc === 'civil' ? 'Civil' : 'EM';
+
+        let catalogTxt = _catalogosDrive[disc];
+        if (!catalogTxt) {
+            try {
+                const url = `${CATALOG_SCRIPT_URL}?action=get&proyecto=${encodeURIComponent(PROYECTO_PARAM)}&esp=${esp}&t=${Date.now()}`;
+                const res = await fetch(url, { redirect: 'follow' });
+                catalogTxt = await res.text();
+                let p; try { p = JSON.parse(catalogTxt); } catch { p = null; }
+                if (p && p.ok === false) throw new Error(p.error || 'Sin catálogo');
+            } catch(err) {
+                showLbToast('⚠ Error al leer catálogo: ' + err.message, 'err');
+                return;
+            }
+        }
+
+        const updated = addTitleToCatalog(catalogTxt, temaRaw, titulo);
+
+        // Save via existing App Script (fire and forget, no-cors)
+        fetch(CATALOG_SCRIPT_URL, {
+            method: 'POST', mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'update', proyecto: PROYECTO_PARAM, esp, contenido: updated })
+        });
+
+        // Optimistic local update
+        _catalogosDrive[disc] = updated;
+        buildCatalogIndex();
+        annotateAllFiles();
+        f._classification = classifyFile(f);
+        updateLbActions(f);
+        updateUnclassifiedPanel();
+        renderGrid();
+
+        showLbToast('✓ Título agregado al catálogo');
+    }
+
+    function addTitleToCatalog(catalogTxt, tema, titulo) {
+        const lines  = catalogTxt.split(/\r?\n/);
+        const result = [];
+        let inserted = false;
+        for (let i = 0; i < lines.length; i++) {
+            result.push(lines[i]);
+            if (!inserted && lines[i].trim() === `<${tema}>`) {
+                result.push(titulo);
+                inserted = true;
+            }
+        }
+        if (!inserted) {
+            result.push(`<${tema}>`);
+            result.push(titulo);
+        }
+        return result.join('\n');
+    }
+
+    function getDiscFromTema(temaName) {
+        if (!temaName) return null;
+        const low = temaName.toLowerCase();
+        for (const [disc, topics] of Object.entries(driveTopics)) {
+            if (topics && topics.some(t => t.label.toLowerCase() === low)) return disc;
+        }
+        return null;
+    }
 </script>
 </body>
 </html>
