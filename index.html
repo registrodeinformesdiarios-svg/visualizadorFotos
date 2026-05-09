@@ -2040,6 +2040,7 @@
 
         // Optimistic local update
         _catalogosDrive[disc] = updated;
+        driveTopics[disc] = parseTopicsTxt(updated);
         buildCatalogIndex();
         annotateAllFiles();
         f._classification = classifyFile(f);
