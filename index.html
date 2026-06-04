@@ -689,6 +689,16 @@
         .lb-toast.ok  { background: rgba(34,197,94,.15);  color: var(--green); }
         .lb-toast.err { background: rgba(239,68,68,.15);  color: #f87171; }
 
+        /* ── FECHA MODAL ── */
+        #fechaModal {
+            display: none;
+            position: fixed; inset: 0; z-index: 400;
+            background: rgba(5,7,12,.82);
+            backdrop-filter: blur(10px);
+            align-items: center; justify-content: center;
+        }
+        #fechaModal.open { display: flex; animation: lbIn .15s ease; }
+
         /* ── RETAG MODAL ── */
         #retagModal {
             display: none;
@@ -925,6 +935,10 @@
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 Reclasificar
             </button>
+            <button class="lb-action-btn secondary" onclick="abrirCambiarFecha()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Cambiar fecha
+            </button>
             <button class="lb-action-btn success" id="lbAddCatalogBtn" onclick="agregarAlCatalogo()" style="display:none;">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Agregar al catálogo
@@ -1017,6 +1031,29 @@
             <button class="retag-save" onclick="guardarReclasificacion()">Guardar</button>
         </div>
         <div class="retag-status" id="retagStatus"></div>
+    </div>
+</div>
+
+<!-- CAMBIAR FECHA MODAL -->
+<div id="fechaModal">
+    <div class="retag-box" style="max-width:340px;">
+        <div class="retag-title">
+            Cambiar fecha
+            <button class="settings-close" onclick="cerrarCambiarFecha()">×</button>
+        </div>
+        <div class="retag-field">
+            <label class="field-label">Nombre actual</label>
+            <div id="fechaModalNombre" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted);word-break:break-all;line-height:1.5;"></div>
+        </div>
+        <div class="retag-field">
+            <label class="field-label">Nueva fecha</label>
+            <input type="date" id="fechaModalInput" class="field-input" style="width:100%;">
+        </div>
+        <div class="retag-actions">
+            <button class="retag-cancel" onclick="cerrarCambiarFecha()">Cancelar</button>
+            <button class="retag-save" onclick="guardarCambioFecha()">Guardar</button>
+        </div>
+        <div class="retag-status" id="fechaModalStatus"></div>
     </div>
 </div>
 
@@ -1945,11 +1982,14 @@
                                .map(s => s.value.trim()).filter(Boolean);
         const partesTema = tema ? [tema, ...niveles].join('-') : '';
 
+        // Use the input date if provided, otherwise keep the original fecha
+        const fechaFinal = f.fecha || '';
+
         let newName;
-        if (f.fecha && partesTema) {
-            newName = `${f.fecha}_${titulo} (${partesTema})_${seq}.${ext}`;
-        } else if (f.fecha) {
-            newName = `${f.fecha}_${titulo}_${seq}.${ext}`;
+        if (fechaFinal && partesTema) {
+            newName = `${fechaFinal}_${titulo} (${partesTema})_${seq}.${ext}`;
+        } else if (fechaFinal) {
+            newName = `${fechaFinal}_${titulo}_${seq}.${ext}`;
         } else {
             newName = `${titulo}.${ext}`;
         }
@@ -2076,6 +2116,89 @@
             if (topics && topics.some(t => t.label.toLowerCase() === low)) return disc;
         }
         return null;
+    }
+
+    // ── Cambiar fecha modal ──────────────────────────────────────────────────
+    function abrirCambiarFecha() {
+        const f = filtered[lbIndex];
+        if (!f) return;
+        document.getElementById('fechaModalNombre').textContent = f.name;
+        // Convert stored fecha (YYYYMMDD) to input date format (YYYY-MM-DD)
+        const fd = f.fecha || '';
+        document.getElementById('fechaModalInput').value =
+            fd.length === 8 ? `${fd.slice(0,4)}-${fd.slice(4,6)}-${fd.slice(6,8)}` : '';
+        document.getElementById('fechaModalStatus').className = 'retag-status';
+        document.getElementById('fechaModalStatus').textContent = '';
+        document.getElementById('fechaModal').classList.add('open');
+    }
+
+    function cerrarCambiarFecha() {
+        document.getElementById('fechaModal').classList.remove('open');
+    }
+
+    async function guardarCambioFecha() {
+        if (!MGMT_SCRIPT_URL) {
+            const s = document.getElementById('fechaModalStatus');
+            s.className = 'retag-status err';
+            s.textContent = 'Configura la URL del Script de Operaciones en Configuración';
+            return;
+        }
+        const fechaInput = document.getElementById('fechaModalInput').value.trim();
+        if (!fechaInput) {
+            const s = document.getElementById('fechaModalStatus');
+            s.className = 'retag-status err';
+            s.textContent = 'Selecciona una fecha';
+            return;
+        }
+        // Convert YYYY-MM-DD → YYYYMMDD
+        const fechaNueva = fechaInput.replace(/-/g, '');
+
+        const f = filtered[lbIndex];
+        if (!f) return;
+
+        // Replace the date portion in the filename, or prepend if no date exists
+        let newName;
+        if (f.fecha && f.name.startsWith(f.fecha)) {
+            newName = fechaNueva + f.name.slice(f.fecha.length);
+        } else if (f.fecha) {
+            newName = f.name.replace(f.fecha, fechaNueva);
+        } else {
+            newName = `${fechaNueva}_${f.name}`;
+        }
+
+        const statusEl = document.getElementById('fechaModalStatus');
+        statusEl.className = 'retag-status';
+        statusEl.textContent = 'Guardando…';
+
+        try {
+            const url  = `${MGMT_SCRIPT_URL}?action=rename&fileId=${encodeURIComponent(f.id)}&newName=${encodeURIComponent(newName)}&t=${Date.now()}`;
+            const res  = await fetch(url, { redirect: 'follow' });
+            const data = await res.json();
+            if (!data.ok) throw new Error(data.error || 'Error desconocido');
+
+            const parsed = parseFilename(newName);
+            const update = { name: newName, ...parsed, fecha: fechaNueva };
+            const inAll  = allFiles.find(x => x.id === f.id);
+            const inFilt = filtered.find(x => x.id === f.id);
+            if (inAll)  Object.assign(inAll,  update);
+            if (inFilt) Object.assign(inFilt, update);
+
+            annotateAllFiles();
+            loadLbPhoto(lbIndex);
+            updateUnclassifiedPanel();
+            renderGrid();
+
+            // Update the displayed name in the modal
+            document.getElementById('fechaModalNombre').textContent = newName;
+
+            statusEl.className = 'retag-status ok';
+            statusEl.textContent = '✓ Fecha actualizada';
+            setTimeout(() => cerrarCambiarFecha(), 1400);
+
+        } catch(err) {
+            statusEl.className = 'retag-status err';
+            statusEl.textContent = 'Error: ' + err.message;
+        }
     }
 </script>
 </body>
