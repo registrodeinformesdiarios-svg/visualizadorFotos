@@ -354,13 +354,16 @@
 
         #lbImg {
             max-width: 100%;
-            max-height: calc(100vh - 210px);
+            max-height: calc(100vh - 290px);
             border-radius: 10px;
             object-fit: contain;
             box-shadow: 0 30px 80px rgba(0,0,0,.6);
             transition: opacity .18s;
         }
         #lbImg.loading { opacity: .2; }
+
+        /* El contenedor del lightbox puede hacer scroll si hace falta, pero sin barra visible */
+        .lb-content::-webkit-scrollbar { display: none; }
 
         .lb-spinner {
             position: absolute;
@@ -586,6 +589,39 @@
             line-height: 1.4;
             letter-spacing: .03em;
         }
+
+        /* ── Estado de la marca de agua ── */
+        .marca-chip {
+            position: absolute;
+            top: 7px; right: 7px;
+            border-radius: 5px;
+            padding: 2px 5px;
+            font-size: 9px;
+            font-weight: 700;
+            font-family: 'DM Mono', monospace;
+            line-height: 1.4;
+            letter-spacing: .03em;
+            pointer-events: none;
+        }
+        .marca-chip.fija      { background: rgba(100,116,139,0.85); color: #fff; }
+        .marca-chip.sin-marca { background: rgba(59,130,246,0.85);  color: #fff; }
+
+        /* Canvas que dibuja la marca dinámica sobre la foto en el lightbox */
+
+        .lb-marca-estado {
+            font-size: 10.5px;
+            font-family: 'DM Mono', monospace;
+            margin-top: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 9px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        .lb-marca-estado.fija      { color: var(--text-muted); background: rgba(100,116,139,0.12); }
+        .lb-marca-estado.con-marca { color: var(--green); background: var(--green-dim); border-color: rgba(34,197,94,0.25); }
+        .lb-marca-estado.sin-marca { color: #60a5fa; background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.25); }
 
         /* Unclassified detail table */
         .unclassified-detail {
@@ -912,7 +948,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
     </button>
 
-    <div style="display:flex; flex-direction:column; align-items:center; max-width:calc(100vw - 140px); max-height:calc(100vh - 30px); overflow-y:auto;">
+    <div class="lb-content" style="display:flex; flex-direction:column; align-items:center; max-width:calc(100vw - 140px); max-height:calc(100vh - 30px); overflow-y:auto; scrollbar-width:none; -ms-overflow-style:none;">
         <div class="lb-img-container">
             <img id="lbImg" src="" alt="">
             <div class="lb-spinner" id="lbSpinner">
@@ -923,6 +959,7 @@
             <div class="lb-secundario" id="lbSecundario"></div>
             <div class="lb-principal" id="lbPrincipal"></div>
             <div class="lb-date" id="lbDate"></div>
+            <div><span id="lbMarcaEstado" class="lb-marca-estado" style="display:none;"></span></div>
             <a id="lbDriveLink" class="lb-open-drive" href="#" target="_blank">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 Abrir en Drive
@@ -942,6 +979,18 @@
             <button class="lb-action-btn success" id="lbAddCatalogBtn" onclick="agregarAlCatalogo()" style="display:none;">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Agregar al catálogo
+            </button>
+            <button class="lb-action-btn secondary" id="lbMarcaVistaBtn" onclick="toggleVistaMarca()" style="display:none;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span id="lbMarcaVistaTxt">Ocultar marca</span>
+            </button>
+            <button class="lb-action-btn secondary" id="lbMarcaToggleBtn" onclick="toggleMarca()" style="display:none;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+                <span id="lbMarcaToggleTxt">Quitar marca</span>
+            </button>
+            <button class="lb-action-btn success" id="lbDescargarMarcaBtn" onclick="descargarFoto()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span id="lbDescargarTxt">Descargar</span>
             </button>
             <button class="lb-action-btn danger" onclick="mostrarConfirmDelete()">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
@@ -1503,7 +1552,7 @@
             do {
                 const params = new URLSearchParams({
                     q: `'${folderId}' in parents and mimeType contains 'image/' and trashed = false`,
-                    fields: 'nextPageToken,files(id,name,mimeType,thumbnailLink)',
+                    fields: 'nextPageToken,files(id,name,mimeType,thumbnailLink,description)',
                     pageSize: 1000,
                     key: apiKey,
                     ...(pageToken ? { pageToken } : {})
@@ -1513,7 +1562,20 @@
                 if (data.error) throw new Error(data.error.message);
                 (data.files || []).forEach(f => {
                     const parsed = parseFilename(f.name);
-                    allFiles.push({ ...f, ...parsed });
+                    // Metadatos guardados por el subidor en la descripción del archivo (JSON)
+                    let meta = null;
+                    if (f.description) {
+                        try { meta = JSON.parse(f.description); } catch { meta = null; }
+                    }
+                    // Estado de la marca:
+                    //  'con_marca'  → foto original (sistema nuevo) que debe mostrarse con marca (se dibuja aquí)
+                    //  'sin_marca'  → foto original (sistema nuevo) subida sin marca (puede activarse luego)
+                    //  'fija'       → foto del sistema viejo: la marca (si la tiene) está incrustada y NO se puede cambiar
+                    let marcaEstado = 'fija';
+                    if (meta && meta.original === 'si') {
+                        marcaEstado = (meta.marca === 'no') ? 'sin_marca' : 'con_marca';
+                    }
+                    allFiles.push({ ...f, ...parsed, meta, marcaEstado });
                 });
                 total += (data.files || []).length;
                 pageToken = data.nextPageToken || '';
@@ -1643,11 +1705,20 @@
         const isUnclassified = f._classification && f._classification !== 'ok';
         const statusLabel = { sin_formato: 'SIN FMT', tema_desconocido: 'TEMA?', titulo_no_catalogo: 'TÍTULO?' };
 
+        // Chip de estado de marca: 🔒 = marca fija (sistema viejo, no editable); S/M = original sin marca
+        let marcaChip = '';
+        if (f.marcaEstado === 'fija') {
+            marcaChip = `<div class="marca-chip fija" title="Marca fija (sistema anterior): no se puede cambiar">🔒</div>`;
+        } else if (f.marcaEstado === 'sin_marca') {
+            marcaChip = `<div class="marca-chip sin-marca" title="Original sin marca: puedes agregarla desde el visor">S/M</div>`;
+        }
+
         return `
         <div class="photo-card${isUnclassified ? ' unclassified' : ''}" onclick="openLightbox(${f._idx})" title="${f.temaSecundario}">
             <img src="${thumb}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%231e2436%22 width=%22100%22 height=%22100%22/><text y=%2255%22 x=%2250%22 text-anchor=%22middle%22 font-size=%2228%22>📷</text></svg>'">
             <div class="overlay"></div>
             ${isUnclassified ? `<div class="unclassified-icon">⚠ ${statusLabel[f._classification] || '?'}</div>` : ''}
+            ${marcaChip}
             <div class="zoom-icon">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
             </div>
@@ -1678,32 +1749,23 @@
         loadLbPhoto(lbIndex);
     }
 
-    function loadLbPhoto(idx) {
-        const f      = filtered[idx];
-        const apiKey = localStorage.getItem('viewer_api_key');
-        const img    = document.getElementById('lbImg');
-        const spinner = document.getElementById('lbSpinner');
+    // Token de carga: evita condiciones de carrera al navegar rápido entre fotos
+    let _lbToken = 0;
 
-        // Use high-res thumbnail (sz=w1600) → best quality without needing download scope
-        const hiRes = f.thumbnailLink
+    function hiResUrl(f) {
+        return f.thumbnailLink
             ? f.thumbnailLink.replace(/=s\d+/, '=s1600')
             : `https://drive.google.com/thumbnail?id=${f.id}&sz=w1600`;
+    }
 
-        img.classList.add('loading');
-        spinner.classList.add('active');
+    function loadLbPhoto(idx) {
+        const f = filtered[idx];
 
-        const tmp = new Image();
-        tmp.onload = () => {
-            img.src = hiRes;
-            img.classList.remove('loading');
-            spinner.classList.remove('active');
-        };
-        tmp.onerror = () => {
-            img.src = hiRes; // try anyway
-            img.classList.remove('loading');
-            spinner.classList.remove('active');
-        };
-        tmp.src = hiRes;
+        // Reiniciar el ocultado visual al cambiar de foto
+        lbMarcaOculta = false;
+        document.getElementById('lbMarcaVistaTxt').textContent = 'Ocultar marca';
+
+        mostrarFotoLb(f, ++_lbToken);
 
         // Caption
         document.getElementById('lbSecundario').textContent = f.temaSecundario || f.name;
@@ -1717,6 +1779,166 @@
         document.getElementById('lbNext').disabled = idx === filtered.length - 1;
 
         updateLbActions(f);
+
+        // Respaldo: si el archivo no trae descripción (App Script sin actualizar),
+        // intentar leer los metadatos XMP incrustados en el propio JPEG.
+        const token = _lbToken;
+        ensureMetaFromXmp(f).then(changed => {
+            const actual = filtered[lbIndex];
+            if (changed && actual && actual.id === f.id && token === _lbToken) {
+                updateLbActions(actual);
+                mostrarFotoLb(actual, ++_lbToken);
+                renderGrid();
+            }
+        });
+    }
+
+    // ── Mostrar la foto en el lightbox ───────────────────────────────────────
+    // Si la marca está activa (y no oculta), el <img> recibe la imagen YA COMPUESTA
+    // (foto + marca en un solo bitmap). Así, el clic derecho → "Copiar imagen" /
+    // "Guardar imagen como" del navegador entrega la versión con marca.
+    async function mostrarFotoLb(f, token) {
+        const img     = document.getElementById('lbImg');
+        const spinner = document.getElementById('lbSpinner');
+        img.classList.add('loading');
+        spinner.classList.add('active');
+
+        let src = hiResUrl(f);
+        if (f.marcaEstado === 'con_marca' && !lbMarcaOculta) {
+            try {
+                src = await obtenerUrlConMarca(f);
+            } catch (e) {
+                console.warn('No se pudo componer la marca, mostrando sin marca:', e);
+            }
+        }
+        if (token !== _lbToken) return; // el usuario ya navegó a otra foto
+
+        const tmp = new Image();
+        const aplicar = () => {
+            if (token !== _lbToken) return;
+            img.src = src;
+            img.classList.remove('loading');
+            spinner.classList.remove('active');
+        };
+        tmp.onload = aplicar;
+        tmp.onerror = aplicar; // try anyway
+        tmp.src = src;
+    }
+
+    function _cargarImagen(url, cors) {
+        return new Promise((ok, bad) => {
+            const i = new Image();
+            if (cors) i.crossOrigin = 'anonymous';
+            i.onload = () => ok(i);
+            i.onerror = () => bad(new Error('No se pudo cargar la imagen'));
+            i.src = url;
+        });
+    }
+
+    function _componerBlob(imgEl, f) {
+        return new Promise((ok, bad) => {
+            try {
+                const cv  = document.createElement('canvas');
+                cv.width  = imgEl.naturalWidth;
+                cv.height = imgEl.naturalHeight;
+                const ctx = cv.getContext('2d');
+                ctx.drawImage(imgEl, 0, 0);
+                drawMarcaOnContext(ctx, cv.width, cv.height, datosMarca(f));
+                cv.toBlob(b => b ? ok(b) : bad(new Error('toBlob falló')), 'image/jpeg', 0.92);
+            } catch (e) {
+                bad(e); // p. ej. SecurityError por canvas contaminado (CORS)
+            }
+        });
+    }
+
+    // Compone foto + marca y devuelve una URL de blob (con caché por foto).
+    async function obtenerUrlConMarca(f) {
+        if (f._marcaUrl) return f._marcaUrl;
+
+        let blob;
+        try {
+            // 1) Intento rápido: thumbnail de alta resolución con CORS
+            const im = await _cargarImagen(hiResUrl(f), true);
+            blob = await _componerBlob(im, f);
+        } catch (e) {
+            // 2) Respaldo: descargar el original completo vía API (CORS garantizado)
+            const apiKey = localStorage.getItem('viewer_api_key');
+            if (!apiKey) throw e;
+            const res = await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media&key=${apiKey}`);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const objUrl = URL.createObjectURL(await res.blob());
+            try {
+                const im2 = await _cargarImagen(objUrl, false);
+                blob = await _componerBlob(im2, f);
+            } finally {
+                URL.revokeObjectURL(objUrl);
+            }
+        }
+
+        f._marcaUrl = URL.createObjectURL(blob);
+        return f._marcaUrl;
+    }
+
+    // Invalida la imagen compuesta en caché (tras renombrar, cambiar fecha o marca)
+    function invalidarMarcaCache(f) {
+        if (f && f._marcaUrl) {
+            URL.revokeObjectURL(f._marcaUrl);
+            delete f._marcaUrl;
+        }
+    }
+
+    // ── Respaldo XMP ─────────────────────────────────────────────────────────
+    // El subidor nuevo incrusta un paquete XMP (psm:*) dentro del JPEG.
+    // Si la descripción de Drive está vacía, se descargan los primeros KB del
+    // archivo y se extraen esos campos. Las fotos del sistema viejo no tienen
+    // psm:original, por lo que siguen clasificándose como 'fija'.
+    function _xmlUnescape(s) {
+        return String(s || '')
+            .replace(/&quot;/g, '"').replace(/&gt;/g, '>')
+            .replace(/&lt;/g, '<').replace(/&amp;/g, '&');
+    }
+
+    async function ensureMetaFromXmp(f) {
+        if (!f || f.meta || f._xmpChecked) return false;
+        f._xmpChecked = true;
+        const apiKey = localStorage.getItem('viewer_api_key');
+        if (!apiKey) return false;
+        try {
+            // El XMP está justo después del inicio del JPEG: bastan los primeros 128 KB
+            const res = await fetch(
+                `https://www.googleapis.com/drive/v3/files/${f.id}?alt=media&key=${apiKey}`,
+                { headers: { 'Range': 'bytes=0-131071' } }
+            );
+            if (!res.ok && res.status !== 206) return false;
+            const buf = await res.arrayBuffer();
+            const txt = new TextDecoder('utf-8', { fatal: false }).decode(buf);
+            if (!txt.includes('psm:original')) return false;
+
+            const get = tag => {
+                const m = txt.match(new RegExp(`<psm:${tag}>([^<]*)</psm:${tag}>`));
+                return m ? _xmlUnescape(m[1]) : '';
+            };
+            const meta = {
+                proyecto: get('proyecto'),
+                fecha: get('fecha'),
+                hora: get('hora'),
+                tema: get('tema'),
+                especialidad: get('especialidad'),
+                clasificacion: get('clasificacion'),
+                marca: get('marca') || 'si',
+                original: get('original')
+            };
+            if (meta.original !== 'si') return false;
+
+            const marcaEstado = (meta.marca === 'no') ? 'sin_marca' : 'con_marca';
+            f.meta = meta;
+            f.marcaEstado = marcaEstado;
+            const inAll = allFiles.find(x => x.id === f.id);
+            if (inAll) { inAll.meta = meta; inAll.marcaEstado = marcaEstado; inAll._xmpChecked = true; }
+            return true;
+        } catch (e) {
+            return false;
+        }
     }
 
     // Keyboard navigation
@@ -1744,10 +1966,242 @@
     });
 
     // ── Lightbox action helpers ──────────────────────────────────────────────
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // MARCA DE AGUA DINÁMICA
+    // Copia fiel de wrapText() y drawWatermark() de la herramienta de subida,
+    // adaptada para recibir los datos desde los metadatos/nombre de la foto
+    // en lugar de los inputs del formulario.
+    // ═══════════════════════════════════════════════════════════════════════
+
+    function wrapTextMarca(ctx, text, x, y, maxWidth, lineHeight, baseSize) {
+        let words = text.split(' ');
+        let line = '';
+        let lines = [];
+        let currentFontSize = baseSize;
+
+        if (text.length > 50) currentFontSize = baseSize * 0.85;
+        if (text.length > 80) currentFontSize = baseSize * 0.75;
+
+        ctx.font = `bold ${currentFontSize}px Arial, sans-serif`;
+
+        for (let n = 0; n < words.length; n++) {
+            let testLine = line + words[n] + ' ';
+            let metrics = ctx.measureText(testLine);
+            let testWidth = metrics.width;
+            if (testWidth > maxWidth && n > 0) {
+                lines.push(line);
+                line = words[n] + ' ';
+            } else {
+                line = testLine;
+            }
+        }
+        lines.push(line);
+
+        for (let i = lines.length - 1; i >= 0; i--) {
+            ctx.fillText(lines[i], x, y);
+            y -= lineHeight * (currentFontSize / baseSize);
+        }
+        return lines.length;
+    }
+
+    // Dibuja la leyenda sobre un contexto de canvas de dimensiones w × h.
+    // datos = { proyecto, fechaFormatted (dd-mm-yyyy), titulo, metadata (clasificación), hora }
+    function drawMarcaOnContext(ctx, w, h, datos) {
+        const baseFontSize = Math.max(w, h) * 0.035;
+        const padding = baseFontSize * 0.8;
+        const maxWidth = w - (padding * 2);
+
+        ctx.fillStyle = 'white';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+        ctx.shadowBlur = baseFontSize * 0.15;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        ctx.textAlign = 'left';
+
+        let currentY = h - padding;
+
+        ctx.font = `italic ${baseFontSize * 0.6}px Arial, sans-serif`;
+        ctx.fillText(datos.metadata, padding, currentY);
+
+        currentY -= baseFontSize * 0.9;
+        const linesUsed = wrapTextMarca(ctx, datos.titulo, padding, currentY, maxWidth, baseFontSize * 1.1, baseFontSize * 1.1);
+
+        currentY -= (linesUsed * baseFontSize * 1.1) + (baseFontSize * 0.2);
+        ctx.font = `bold ${baseFontSize}px Arial, sans-serif`;
+        ctx.fillText(datos.fechaFormatted, padding, currentY);
+
+        currentY -= baseFontSize * 1.1;
+        ctx.fillText(datos.proyecto, padding, currentY);
+
+        // Hora de la foto (EXIF) — pequeña, esquina inferior derecha. Solo si está disponible.
+        if (datos.hora) {
+            ctx.font = `${baseFontSize * 0.5}px Arial, sans-serif`;
+            ctx.textAlign = 'right';
+            ctx.fillText(datos.hora, w - padding, h - padding);
+            ctx.textAlign = 'left';
+        }
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+    }
+
+    // Arma los datos de la leyenda desde los metadatos y el nombre del archivo.
+    // Esto hace que al reclasificar o cambiar la fecha, la marca se actualice sola.
+    function datosMarca(f) {
+        const meta   = f.meta || {};
+        const partsP = (f.temaPrincipal || '').split('-').map(s => s.trim()).filter(Boolean);
+        const fd     = f.fecha || '';
+        const fechaFormatted = fd.length === 8 ? `${fd.slice(6,8)}-${fd.slice(4,6)}-${fd.slice(0,4)}` : '';
+        return {
+            proyecto: meta.proyecto || PROYECTO_PARAM || '',
+            fechaFormatted,
+            titulo: f.temaSecundario || meta.titulo || '',
+            metadata: partsP.length ? partsP.join(' / ') : (meta.clasificacion || ''),
+            hora: meta.hora || ''
+        };
+    }
+
+    // Ocultado VISUAL de la marca (no cambia metadatos): se reinicia al cambiar de foto
+    let lbMarcaOculta = false;
+
+    function toggleVistaMarca() {
+        lbMarcaOculta = !lbMarcaOculta;
+        document.getElementById('lbMarcaVistaTxt').textContent =
+            lbMarcaOculta ? 'Mostrar marca' : 'Ocultar marca';
+        const f = filtered[lbIndex];
+        if (f) mostrarFotoLb(f, ++_lbToken);
+    }
+
+    // ── Activar / quitar la marca en una foto original (sistema nuevo) ───────
+    async function toggleMarca() {
+        const f = filtered[lbIndex];
+        if (!f || f.marcaEstado === 'fija') return;
+
+        if (!MGMT_SCRIPT_URL) {
+            showLbToast('⚠ Configura la URL del Script de Operaciones en Configuración', 'err');
+            return;
+        }
+
+        const nuevaMarca = (f.marcaEstado === 'con_marca') ? 'no' : 'si';
+        const nuevoMeta  = { ...(f.meta || {}), original: 'si', marca: nuevaMarca };
+        const desc       = JSON.stringify(nuevoMeta);
+
+        try {
+            const url  = `${MGMT_SCRIPT_URL}?action=setdesc&fileId=${encodeURIComponent(f.id)}&desc=${encodeURIComponent(desc)}&t=${Date.now()}`;
+            const res  = await fetch(url, { redirect: 'follow' });
+            const data = await res.json();
+            if (!data.ok) throw new Error(data.error || 'Acción setdesc no disponible en el App Script');
+
+            const update = { meta: nuevoMeta, marcaEstado: nuevaMarca === 'si' ? 'con_marca' : 'sin_marca', description: desc };
+            const inAll  = allFiles.find(x => x.id === f.id);
+            const inFilt = filtered.find(x => x.id === f.id);
+            if (inAll)  { invalidarMarcaCache(inAll);  Object.assign(inAll,  update); }
+            if (inFilt) { invalidarMarcaCache(inFilt); Object.assign(inFilt, update); }
+
+            updateLbActions(filtered[lbIndex]);
+            mostrarFotoLb(filtered[lbIndex], ++_lbToken);
+            renderGrid();
+            showLbToast(nuevaMarca === 'si' ? '✓ Marca activada' : '✓ Marca quitada');
+        } catch (err) {
+            showLbToast('Error al cambiar la marca: ' + err.message, 'err');
+        }
+    }
+
+    // ── Componer la foto actual (original de Drive + marca si está activa) ───
+    // Devuelve { canvas, f, conMarca }. Si la marca no está activa (o es una
+    // foto del sistema viejo, donde ya viene incrustada), entrega el original tal cual.
+    async function obtenerCanvasFotoActual() {
+        const f = filtered[lbIndex];
+        if (!f) throw new Error('Sin foto seleccionada');
+        const apiKey = localStorage.getItem('viewer_api_key');
+        if (!apiKey) { openSettings(); throw new Error('Configura tu Google API Key'); }
+
+        const res = await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media&key=${apiKey}`);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+
+        const img = await new Promise((ok, bad) => {
+            const i = new Image();
+            i.onload = () => ok(i);
+            i.onerror = () => bad(new Error('No se pudo leer la imagen'));
+            i.src = url;
+        });
+
+        const cv = document.createElement('canvas');
+        cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+        const ctx = cv.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+
+        const conMarca = f.marcaEstado === 'con_marca';
+        if (conMarca) drawMarcaOnContext(ctx, cv.width, cv.height, datosMarca(f));
+
+        URL.revokeObjectURL(url);
+        return { canvas: cv, f, conMarca };
+    }
+
+    // ── Descargar la foto (con la marca aplicada si está activa) ─────────────
+    async function descargarFoto() {
+        const fSel = filtered[lbIndex];
+        if (!fSel) return;
+        showLbToast('Preparando descarga…');
+        try {
+            const { canvas, f, conMarca } = await obtenerCanvasFotoActual();
+            const a = document.createElement('a');
+            a.download = f.name;
+            a.href = canvas.toDataURL('image/jpeg', 0.9);
+            a.click();
+            showLbToast(conMarca ? '✓ Foto descargada con marca' : '✓ Foto descargada');
+        } catch (err) {
+            showLbToast('Error al descargar: ' + err.message, 'err');
+        }
+    }
+
+    // ── Copiar con clic derecho ───────────────────────────────────────────────
+    // No se necesita botón: la imagen del lightbox ya ES la versión compuesta
+    // (foto + marca) cuando la marca está activa, así que el menú contextual
+    // nativo del navegador (Copiar imagen / Guardar imagen como) la incluye.
+
     function updateLbActions(f) {
         // "Agregar al catálogo" only when the title isn't in the catalog yet
         const addBtn = document.getElementById('lbAddCatalogBtn');
         addBtn.style.display = (f && f._classification === 'titulo_no_catalogo') ? '' : 'none';
+
+        // ── Estado / acciones de la marca de agua ──
+        const toggleBtn   = document.getElementById('lbMarcaToggleBtn');
+        const toggleTxt   = document.getElementById('lbMarcaToggleTxt');
+        const dlBtn       = document.getElementById('lbDescargarMarcaBtn');
+        const dlTxt       = document.getElementById('lbDescargarTxt');
+        const estadoEl    = document.getElementById('lbMarcaEstado');
+        const vistaBtn    = document.getElementById('lbMarcaVistaBtn');
+
+        // Descargar siempre disponible; la etiqueta indica si llevará la marca
+        const marcaActiva = f && f.marcaEstado === 'con_marca';
+        dlTxt.textContent = marcaActiva ? 'Descargar con marca' : 'Descargar';
+
+        if (f && f.marcaEstado === 'con_marca') {
+            estadoEl.style.display = '';
+            estadoEl.className = 'lb-marca-estado con-marca';
+            estadoEl.textContent = '🏷 Marca dinámica activa (editable)';
+            vistaBtn.style.display = '';
+            toggleBtn.style.display = '';
+            toggleTxt.textContent = 'Quitar marca';
+        } else if (f && f.marcaEstado === 'sin_marca') {
+            estadoEl.style.display = '';
+            estadoEl.className = 'lb-marca-estado sin-marca';
+            estadoEl.textContent = '◯ Original sin marca — puedes agregarla';
+            vistaBtn.style.display = 'none';
+            toggleBtn.style.display = '';
+            toggleTxt.textContent = 'Agregar marca';
+        } else {
+            // Foto del sistema anterior: la marca (si la tiene) está incrustada en la imagen.
+            estadoEl.style.display = '';
+            estadoEl.className = 'lb-marca-estado fija';
+            estadoEl.textContent = '🔒 Marca fija (sistema anterior) — no se puede cambiar';
+            vistaBtn.style.display = 'none';
+            toggleBtn.style.display = 'none';
+        }
+
         // Reset delete confirm state
         document.getElementById('lbDeleteConfirm').classList.remove('visible');
         document.getElementById('lbActions').style.display = '';
@@ -2008,8 +2462,8 @@
             const update = { name: newName, ...parsed };
             const inAll  = allFiles.find(x => x.id === f.id);
             const inFilt = filtered.find(x => x.id === f.id);
-            if (inAll)  Object.assign(inAll,  update);
-            if (inFilt) Object.assign(inFilt, update);
+            if (inAll)  { invalidarMarcaCache(inAll);  Object.assign(inAll,  update); }
+            if (inFilt) { invalidarMarcaCache(inFilt); Object.assign(inFilt, update); }
 
             annotateAllFiles();
             loadLbPhoto(lbIndex);
@@ -2180,8 +2634,8 @@
             const update = { name: newName, ...parsed, fecha: fechaNueva };
             const inAll  = allFiles.find(x => x.id === f.id);
             const inFilt = filtered.find(x => x.id === f.id);
-            if (inAll)  Object.assign(inAll,  update);
-            if (inFilt) Object.assign(inFilt, update);
+            if (inAll)  { invalidarMarcaCache(inAll);  Object.assign(inAll,  update); }
+            if (inFilt) { invalidarMarcaCache(inFilt); Object.assign(inFilt, update); }
 
             annotateAllFiles();
             loadLbPhoto(lbIndex);
