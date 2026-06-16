@@ -1377,11 +1377,29 @@
     function parseFilename(name) {
         const base  = name.replace(/\.[^.]+$/, '');
         const noSeq = base.replace(/_\d+$/, '');
-        const m = noSeq.match(/^(\d{8})_(.+?)\s*\(([^)]+)\)\s*$/);
-        if (m) return { fecha: m[1], temaSecundario: m[2].trim(), temaPrincipal: m[3].trim() };
-        const d = noSeq.match(/^(\d{8})_(.+)$/);
-        if (d) return { fecha: d[1], temaSecundario: d[2].trim(), temaPrincipal: '' };
-        return { fecha: '', temaSecundario: base, temaPrincipal: '' };
+        const dm = noSeq.match(/^(\d{8})_(.*)$/);
+        if (!dm) return { fecha: '', temaSecundario: base, temaPrincipal: '' };
+        const fecha = dm[1];
+        const rest  = dm[2];
+
+        // La clasificación es el ÚLTIMO grupo de paréntesis balanceado al final.
+        // Se recorre de derecha a izquierda contando profundidad, de modo que
+        // una clasificación que contenga paréntesis anidados —p. ej.
+        // "Seccionadoras paralela (con PT)"— no rompa el análisis.
+        if (rest.endsWith(')')) {
+            let depth = 0, openIdx = -1;
+            for (let i = rest.length - 1; i >= 0; i--) {
+                const c = rest[i];
+                if (c === ')') depth++;
+                else if (c === '(') { depth--; if (depth === 0) { openIdx = i; break; } }
+            }
+            if (openIdx > 0) {
+                const titulo = rest.slice(0, openIdx).trim();
+                const clasif = rest.slice(openIdx + 1, rest.length - 1).trim();
+                if (titulo) return { fecha, temaSecundario: titulo, temaPrincipal: clasif };
+            }
+        }
+        return { fecha, temaSecundario: rest.trim(), temaPrincipal: '' };
     }
 
     function formatFecha(f) {
