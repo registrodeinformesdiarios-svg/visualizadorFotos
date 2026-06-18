@@ -133,6 +133,38 @@
 
         .folder-input { min-width: 220px; font-size: 11px; }
 
+        /* ── SEARCH BOX ── */
+        .search-wrap { position: relative; display: flex; align-items: center; }
+        .search-icon {
+            position: absolute;
+            left: 11px;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+        .search-input {
+            width: 100%;
+            padding-left: 32px;
+            padding-right: 30px;
+        }
+        .search-clear {
+            position: absolute;
+            right: 6px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 20px; height: 20px;
+            border: none;
+            border-radius: 6px;
+            background: var(--surface2);
+            color: var(--text-dim);
+            font-size: 16px;
+            line-height: 1;
+            cursor: pointer;
+            transition: all .15s;
+        }
+        .search-clear:hover { color: var(--text); background: var(--border-hover); }
+        .search-wrap.has-text .search-clear { display: flex; }
+
         .load-btn {
             padding: 8px 20px;
             background: var(--green);
@@ -866,6 +898,14 @@
     <div class="field-group" style="flex:1; min-width:200px;">
         <label class="field-label">ID de carpeta Drive</label>
         <input type="text" id="folderId" class="field-input folder-input" placeholder="1Sox86IWQ6IoAWDUx...">
+    </div>
+    <div class="field-group" style="flex:1; min-width:200px;">
+        <label class="field-label">Buscar</label>
+        <div class="search-wrap">
+            <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="searchBox" class="field-input search-input" placeholder="Título, tema o nombre…" oninput="applyFilters()">
+            <button type="button" id="searchClear" class="search-clear" onclick="clearSearch()" title="Limpiar búsqueda">×</button>
+        </div>
     </div>
     <div class="field-group">
         <label class="field-label">Disciplina</label>
@@ -1619,6 +1659,14 @@
         const desde     = document.getElementById('fechaDesde').value.replace(/-/g,'');
         const hasta     = document.getElementById('fechaHasta').value.replace(/-/g,'');
 
+        // Free-text search across título, tema and filename
+        const searchEl   = document.getElementById('searchBox');
+        const searchTerm = searchEl ? searchEl.value.trim().toLowerCase() : '';
+        if (searchEl) {
+            searchEl.closest('.search-wrap').classList.toggle('has-text', !!searchTerm);
+        }
+        const searchWords = searchTerm.split(/\s+/).filter(Boolean);
+
         // Build a Set of tema labels that belong to the selected discipline (for fast lookup)
         const discTopicLabels = (disc && driveTopics[disc])
             ? new Set(driveTopics[disc].map(t => t.label.toLowerCase()))
@@ -1662,12 +1710,28 @@
                 if (fTitulo !== tituloFiltro) return false;
             }
 
+            // Free-text search: every word must appear somewhere in título/tema/nombre
+            if (searchWords.length) {
+                const haystack = [
+                    f.temaSecundario,
+                    f.temaPrincipal,
+                    f.name
+                ].filter(Boolean).join(' ').toLowerCase();
+                if (!searchWords.every(w => haystack.includes(w))) return false;
+            }
+
             if (desde && f.fecha && f.fecha < desde) return false;
             if (hasta && f.fecha && f.fecha > hasta) return false;
             return true;
         });
 
         renderGrid();
+    }
+
+    function clearSearch() {
+        const el = document.getElementById('searchBox');
+        if (el) { el.value = ''; el.focus(); }
+        applyFilters();
     }
 
     // ── Render grid ────────────────────────────────────────────────────────
