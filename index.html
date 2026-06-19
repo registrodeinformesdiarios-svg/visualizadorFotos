@@ -1128,10 +1128,137 @@
             user-select: none;
         }
 
+        /* selector de modo (Detalle / General) */
+        .tl-modes {
+            display: inline-flex;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--bg);
+        }
+        .tl-mode {
+            border: 0;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 4px 12px;
+            cursor: pointer;
+            transition: all .15s;
+        }
+        .tl-mode + .tl-mode { border-left: 1px solid var(--border); }
+        .tl-mode:hover { color: var(--text); }
+        .tl-mode.active { background: var(--surface2); color: var(--text); }
+
+        /* ── Vista GENERAL (Gantt semanal) ── */
+        .tl-gantt { display: none; }
+        .timeline.mode-general #tlGrid { display: none; }
+        .timeline.mode-general .tl-gantt {
+            display: grid;
+            width: max-content;
+            min-width: 100%;
+            --tl-day: 24px;
+            --tl-lbl: 174px;
+            align-items: stretch;
+        }
+
+        .g-sticky { position: sticky; left: 0; z-index: 3; background: var(--bg); }
+        .g-corner { border-radius: 8px 8px 0 0; }
+
+        .g-week {
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 7px 4px 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .g-week.wk { border-left: 1px solid var(--border); }
+
+        .g-group {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .02em;
+            padding: 6px 12px 5px;
+            border-left: 3px solid transparent;
+            margin-top: 4px;
+        }
+        .g-group .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .g-group.civil { color: #bfdbfe; border-left-color: var(--civil); }
+        .g-group.civil .dot { background: var(--civil); box-shadow: 0 0 8px var(--civil-glow); }
+        .g-group.em    { color: #bbf7d0; border-left-color: var(--em); }
+        .g-group.em .dot { background: var(--em); box-shadow: 0 0 8px var(--em-glow); }
+        .g-group.otros { color: var(--text-dim); border-left-color: var(--otros); }
+        .g-group.otros .dot { background: var(--otros); }
+        .g-groupfill { margin-top: 4px; }
+        .g-groupfill.civil { background: rgba(59,130,246,0.05); }
+        .g-groupfill.em    { background: rgba(34,197,94,0.05); }
+        .g-groupfill.otros { background: rgba(148,163,184,0.04); }
+
+        .g-row-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 0 10px 0 16px;
+            min-height: 24px;
+            font-size: 11px;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: background .15s, color .15s;
+        }
+        .g-row-label .g-name {
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .g-row-label .g-n {
+            flex-shrink: 0;
+            font-family: 'DM Mono', monospace;
+            font-size: 9px;
+            color: var(--text-muted);
+            background: var(--surface2);
+            border-radius: 99px;
+            padding: 1px 6px;
+        }
+        .g-row-label.civil { border-left-color: rgba(59,130,246,0.4); }
+        .g-row-label.em    { border-left-color: rgba(34,197,94,0.4); }
+        .g-row-label.otros { border-left-color: rgba(148,163,184,0.4); }
+        .g-row-label:hover { background: var(--surface2); color: var(--text); }
+        .g-row-label.active { background: var(--surface2); color: var(--text); font-weight: 600; }
+
+        .g-cell {
+            display: flex;
+            align-items: center;
+            min-height: 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.025);
+        }
+        .g-cell.wk { border-left: 1px solid var(--border); }
+        .g-bar {
+            width: 100%;
+            height: 13px;
+            display: block;
+        }
+        .g-bar.s { border-top-left-radius: 7px; border-bottom-left-radius: 7px; margin-left: 1px; }
+        .g-bar.e { border-top-right-radius: 7px; border-bottom-right-radius: 7px; margin-right: 1px; }
+        .g-bar.civil { background: var(--civil); }
+        .g-bar.em    { background: var(--em); }
+        .g-bar.otros { background: var(--otros); }
+        /* atenúa las barras no seleccionadas cuando hay un tema activo */
+        .timeline.mode-general.has-sel .g-bar { opacity: .32; }
+        .timeline.mode-general.has-sel .g-cell.active .g-bar { opacity: 1; }
+        .g-cell.active .g-bar { box-shadow: 0 0 0 1px rgba(255,255,255,0.25) inset; }
+
         @media (max-width: 640px) {
-            .tl-head { padding: 8px 14px; }
+            .tl-head { padding: 8px 14px; flex-wrap: wrap; }
             .tl-scroll { padding: 0 14px 14px; }
             .tl-grid { grid-auto-columns: minmax(118px, 1fr); }
+            .timeline.mode-general .tl-gantt { --tl-day: 20px; --tl-lbl: 130px; }
         }
     </style>
 </head>
@@ -1231,6 +1358,10 @@
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
             Línea de tiempo
         </span>
+        <div class="tl-modes" role="group" aria-label="Modo de la línea de tiempo">
+            <button class="tl-mode active" id="tlModeDetalle" onclick="setTimelineMode('detalle')">Detalle</button>
+            <button class="tl-mode" id="tlModeGeneral" onclick="setTimelineMode('general')">General</button>
+        </div>
         <span class="tl-count" id="tlCount"></span>
         <div class="tl-spacer"></div>
         <button class="tl-toggle" id="tlToggle" onclick="toggleTimeline()">
@@ -1241,6 +1372,7 @@
     <div class="tl-body" id="tlBody">
         <div class="tl-scroll" id="tlScroll">
             <div class="tl-grid" id="tlGrid"></div>
+            <div class="tl-gantt" id="tlGantt"></div>
         </div>
     </div>
 </div>
@@ -2022,6 +2154,8 @@
 
     // ── TIMELINE (línea de tiempo) ─────────────────────────────────────────
     const TL_HIDDEN_KEY = 'viewer_timeline_hidden';
+    const TL_MODE_KEY   = 'viewer_timeline_mode';
+    let tlMode = (localStorage.getItem(TL_MODE_KEY) === 'general') ? 'general' : 'detalle';
 
     // Construye los conjuntos de temas por disciplina a partir del catálogo
     function _temaSets() {
@@ -2097,9 +2231,23 @@
         const scrollEl   = document.getElementById('tlScroll');
         const prevScroll = scrollEl ? scrollEl.scrollLeft : 0;
 
-        renderTimeline(days, byDay, lanes, laneNombre);
-        document.getElementById('tlCount').textContent =
-            `${days.length} ${days.length === 1 ? 'día' : 'días'}`;
+        // Refleja el modo activo en el contenedor y los botones
+        tl.classList.toggle('mode-general', tlMode === 'general');
+        document.getElementById('tlModeDetalle').classList.toggle('active', tlMode !== 'general');
+        document.getElementById('tlModeGeneral').classList.toggle('active', tlMode === 'general');
+
+        if (tlMode === 'general') {
+            const byDisc  = buildGeneralData(byDay, days, lanes);
+            const allDays = _enumDias(days[0], days[days.length - 1]);
+            renderTimelineGeneral(byDisc, allDays, lanes, laneNombre);
+            const temas = lanes.reduce((s, l) => s + (byDisc[l] ? byDisc[l].size : 0), 0);
+            document.getElementById('tlCount').textContent =
+                `${temas} ${temas === 1 ? 'tema' : 'temas'} · ${days.length} ${days.length === 1 ? 'día' : 'días'}`;
+        } else {
+            renderTimeline(days, byDay, lanes, laneNombre);
+            document.getElementById('tlCount').textContent =
+                `${days.length} ${days.length === 1 ? 'día' : 'días'}`;
+        }
         tl.classList.add('ready');
 
         // Estado oculto recordado
@@ -2115,6 +2263,97 @@
         });
 
         refreshTimelineActive();
+    }
+
+    // ── Datos y render de la vista GENERAL (Gantt semanal por tema principal) ──
+
+    function _ymd(d) {
+        const p = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}`;
+    }
+    function _parseYmd(f) {
+        return new Date(+f.slice(0, 4), +f.slice(4, 6) - 1, +f.slice(6, 8));
+    }
+    // Lista continua de días (YYYYMMDD) entre dos fechas, con tope de seguridad
+    function _enumDias(minF, maxF) {
+        const out = []; let d = _parseYmd(minF); const end = _parseYmd(maxF); let g = 0;
+        while (d <= end && g++ < 1500) { out.push(_ymd(d)); d.setDate(d.getDate() + 1); }
+        return out;
+    }
+    // Clave del lunes de la semana de una fecha
+    function _lunesKey(f) {
+        const d = _parseYmd(f); const wd = (d.getDay() + 6) % 7; d.setDate(d.getDate() - wd);
+        return _ymd(d);
+    }
+    // Etiqueta compacta de una semana a partir de su primer y último día visibles
+    function _weekLabel(firstF, lastF) {
+        const a = _parseYmd(firstF), b = _parseYmd(lastF);
+        const mon = d => d.toLocaleDateString('es', { month: 'short' }).replace('.', '');
+        return a.getMonth() === b.getMonth()
+            ? `${a.getDate()}–${b.getDate()} ${mon(b)}`
+            : `${a.getDate()} ${mon(a)} – ${b.getDate()} ${mon(b)}`;
+    }
+
+    // Reúne, por disciplina, cada TEMA PRINCIPAL con sus días trabajados y total de fotos
+    function buildGeneralData(byDay, days, lanes) {
+        const byDisc = { civil: new Map(), em: new Map(), otros: new Map() };
+        days.forEach(f => {
+            lanes.forEach(l => {
+                const m = byDay.get(f)[l];
+                m.forEach(({ base, n }) => {
+                    let rec = byDisc[l].get(base);
+                    if (!rec) { rec = { dias: new Set(), n: 0 }; byDisc[l].set(base, rec); }
+                    rec.dias.add(f); rec.n += n;
+                });
+            });
+        });
+        return byDisc;
+    }
+
+    function renderTimelineGeneral(byDisc, days, lanes, laneNombre) {
+        const g = document.getElementById('tlGantt');
+        const N = days.length;
+        g.style.gridTemplateColumns = `var(--tl-lbl) repeat(${N}, var(--tl-day))`;
+        const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+        // Agrupa los días en semanas (para los encabezados y los separadores)
+        const groups = []; let cur = null; const weekStart = new Set();
+        days.forEach((f, i) => {
+            const wk = _lunesKey(f);
+            if (!cur || cur.wk !== wk) { cur = { wk, first: f, last: f, count: 0 }; groups.push(cur); if (i > 0) weekStart.add(i); }
+            cur.count++; cur.last = f;
+        });
+
+        let html = '<div class="g-sticky g-corner"></div>';
+        groups.forEach((grp, gi) => {
+            html += `<div class="g-week${gi > 0 ? ' wk' : ''}" style="grid-column: span ${grp.count}">` +
+                    `${esc(_weekLabel(grp.first, grp.last))}</div>`;
+        });
+
+        lanes.forEach(l => {
+            const m = byDisc[l];
+            if (!m || m.size === 0) return;
+            html += `<div class="g-sticky g-group ${l}"><span class="dot"></span>${laneNombre[l]}</div>`;
+            html += `<div class="g-groupfill ${l}" style="grid-column: span ${N}"></div>`;
+            [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], 'es', { numeric: true })).forEach(([base, rec]) => {
+                html += `<div class="g-sticky g-row-label ${l}" data-disc="${l}" data-tema="${esc(base)}" ` +
+                        `title="${esc(base)} · ${rec.n} foto${rec.n === 1 ? '' : 's'}" ` +
+                        `onclick="seleccionarTemaTimeline(this)">` +
+                        `<span class="g-name">${esc(base)}</span><span class="g-n">${rec.n}</span></div>`;
+                for (let i = 0; i < N; i++) {
+                    const f = days[i];
+                    const sep = weekStart.has(i) ? ' wk' : '';
+                    if (!rec.dias.has(f)) { html += `<div class="g-cell${sep}"></div>`; continue; }
+                    const s = !rec.dias.has(days[i - 1]) ? ' s' : '';
+                    const e = !rec.dias.has(days[i + 1]) ? ' e' : '';
+                    html += `<div class="g-cell${sep}" data-disc="${l}" data-tema="${esc(base)}" ` +
+                            `onclick="seleccionarTemaTimeline(this)">` +
+                            `<span class="g-bar ${l}${s}${e}"></span></div>`;
+                }
+            });
+        });
+
+        g.innerHTML = html;
     }
 
     function renderTimeline(days, byDay, lanes, laneNombre) {
@@ -2147,8 +2386,8 @@
                 }
                 const chips = [...map.values()]
                     .sort((a, b) =>
-                        a.base.localeCompare(b.base, 'es') ||
-                        a.titulo.localeCompare(b.titulo, 'es'))
+                        a.base.localeCompare(b.base, 'es', { numeric: true }) ||
+                        a.titulo.localeCompare(b.titulo, 'es', { numeric: true }))
                     .map(({ base, titulo, n }) => {
                         const titLine = titulo ? `<span class="tl-tit">${esc(titulo)}</span>` : '';
                         const titleAttr = esc(base) + (titulo ? ' — ' + esc(titulo) : '');
@@ -2176,24 +2415,51 @@
             (tituloSel && tituloSel.value.trim().toLowerCase()) ||
             (sb && sb.value.trim().toLowerCase()) || '';
 
+        // Vista DETALLE (chips por día)
         document.querySelectorAll('.tl-chip').forEach(ch => {
             if (!disc || !tema || ch.dataset.disc !== disc) { ch.classList.remove('active'); return; }
             const base = (ch.dataset.tema || '').toLowerCase().trim();
             const tit  = (ch.dataset.titulo || '').toLowerCase().trim();
             let on = base === tema;
-            // Si hay un título/búsqueda activo, restringe el resaltado a ese bloque
             if (on && tituloFiltro) {
                 on = tit === tituloFiltro || tit.includes(tituloFiltro) || tituloFiltro.includes(tit);
             }
             ch.classList.toggle('active', on);
         });
+
+        // Vista GENERAL (etiquetas y barras del Gantt) → resalta todo el tema
+        document.querySelectorAll('.g-row-label, .g-cell[data-tema]').forEach(el => {
+            const on = !!disc && !!tema &&
+                       el.dataset.disc === disc &&
+                       (el.dataset.tema || '').toLowerCase().trim() === tema;
+            el.classList.toggle('active', on);
+        });
+        // Atenúa el resto del Gantt sólo cuando hay un tema seleccionado
+        document.getElementById('timeline').classList.toggle('has-sel', !!(disc && tema));
     }
 
-    // Clic en un bloque → selecciona ese tema principal + título y muestra sus fotos
+    // Limpia la selección actual (quita el sombreado) y muestra todas las fotos
+    async function limpiarSeleccionTimeline() {
+        document.getElementById('disciplina').value = '';
+        await onDisciplinaChange();           // reinicia tema/niveles y aplica filtros
+        const sb = document.getElementById('searchBox');
+        if (sb) sb.value = '';
+        applyFilters();
+        refreshTimelineActive();
+    }
+
+    // Clic en un bloque → selecciona ese tema (+título en Detalle) y muestra sus fotos.
+    // Si el bloque ya estaba seleccionado (sombreado), lo deselecciona.
     async function seleccionarTemaTimeline(el) {
+        // Toggle: si ya está seleccionado, quitar la selección
+        if (el.classList.contains('active')) {
+            await limpiarSeleccionTimeline();
+            return;
+        }
+
         const disc   = el.dataset.disc;
         const base   = el.dataset.tema || '';
-        const titulo = el.dataset.titulo || '';
+        const titulo = el.dataset.titulo || '';   // vacío en la vista general
         const sb     = document.getElementById('searchBox');
 
         // Caso "otros": no está en catálogo → filtrar por texto
@@ -2223,7 +2489,7 @@
         document.querySelectorAll('#opcionesNiveles select:not([data-type="titulo"])')
             .forEach(s => s.value = '');
 
-        // 4) Fijar el TÍTULO: si existe en el desplegable se usa; si no, se usa la búsqueda
+        // 4) Fijar el TÍTULO si aplica (vista detalle); si no existe en el catálogo, búsqueda
         let usadoSelect = false;
         const tituloSel = document.querySelector('#opcionesNiveles select[data-type="titulo"]');
         if (titulo && tituloSel) {
@@ -2249,6 +2515,18 @@
     // Cambios en el rango Desde/Hasta: filtra la galería y recorta la línea de tiempo
     function onFechaRangeChange() {
         applyFilters();
+        buildTimeline({ scrollEnd: true });
+    }
+
+    // Cambia entre la vista de Detalle (por día) y la General (Gantt semanal)
+    function setTimelineMode(mode) {
+        mode = (mode === 'general') ? 'general' : 'detalle';
+        if (mode === tlMode) return;
+        tlMode = mode;
+        localStorage.setItem(TL_MODE_KEY, tlMode);
+        document.getElementById('tlModeDetalle').classList.toggle('active', tlMode !== 'general');
+        document.getElementById('tlModeGeneral').classList.toggle('active', tlMode === 'general');
+        document.getElementById('timeline').classList.toggle('mode-general', tlMode === 'general');
         buildTimeline({ scrollEnd: true });
     }
 
