@@ -870,6 +870,269 @@
             font-family: 'DM Mono', monospace;
             color: var(--text-dim);
         }
+
+        /* ── TIMELINE (línea de tiempo) ── */
+        :root {
+            --civil: #3b82f6;
+            --civil-dim: rgba(59,130,246,0.13);
+            --civil-glow: rgba(59,130,246,0.45);
+            --em: #22c55e;
+            --em-dim: rgba(34,197,94,0.13);
+            --em-glow: rgba(34,197,94,0.45);
+            --otros: #94a3b8;
+            --otros-dim: rgba(148,163,184,0.12);
+        }
+
+        .timeline {
+            background: linear-gradient(180deg, var(--surface) 0%, rgba(24,28,39,0.6) 100%);
+            border-bottom: 1px solid var(--border);
+            display: none;            /* shown by JS once photos load */
+        }
+        .timeline.ready { display: block; }
+
+        .tl-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 24px;
+            cursor: default;
+        }
+        .tl-head-title {
+            display: flex; align-items: center; gap: 8px;
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .tl-head-title svg { opacity: .65; }
+        .tl-count {
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            color: var(--text-muted);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 2px 7px;
+        }
+        .tl-spacer { flex: 1; }
+        .tl-toggle {
+            display: flex; align-items: center; gap: 6px;
+            padding: 5px 11px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 11px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 500;
+            transition: all .15s;
+        }
+        .tl-toggle:hover {
+            border-color: var(--border-hover);
+            color: var(--text);
+            background: var(--surface2);
+        }
+        .tl-toggle .chev { transition: transform .2s; }
+
+        /* Collapsed: only the header bar stays visible */
+        .tl-body { transition: max-height .25s ease, opacity .2s ease; }
+        .timeline.collapsed .tl-body { display: none; }
+        .timeline.collapsed .tl-toggle .chev { transform: rotate(180deg); }
+        .timeline.collapsed { background: var(--surface); }
+
+        .tl-scroll {
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 0 24px 16px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-hover) transparent;
+        }
+        .tl-scroll::-webkit-scrollbar { height: 8px; }
+        .tl-scroll::-webkit-scrollbar-track { background: transparent; }
+        .tl-scroll::-webkit-scrollbar-thumb {
+            background: var(--border-hover);
+            border-radius: 99px;
+        }
+
+        .tl-grid {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(132px, 1fr);
+            gap: 6px;
+            width: max-content;
+            min-width: 100%;
+        }
+
+        /* sticky left label column */
+        .tl-sticky {
+            position: sticky;
+            left: 0;
+            z-index: 3;
+            background: var(--bg);
+        }
+        .tl-corner {
+            border-radius: 8px 8px 0 0;
+        }
+        .tl-lane-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            color: var(--text-dim);
+            border-left: 3px solid transparent;
+        }
+        .tl-lane-label .dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        }
+        .tl-lane-label.civil { border-left-color: var(--civil); color: #bfdbfe; }
+        .tl-lane-label.civil .dot { background: var(--civil); box-shadow: 0 0 8px var(--civil-glow); }
+        .tl-lane-label.em    { border-left-color: var(--em);    color: #bbf7d0; }
+        .tl-lane-label.em .dot    { background: var(--em);    box-shadow: 0 0 8px var(--em-glow); }
+        .tl-lane-label.otros { border-left-color: var(--otros); color: var(--text-dim); }
+        .tl-lane-label.otros .dot { background: var(--otros); }
+
+        /* day header cells */
+        .tl-day-head {
+            text-align: center;
+            font-family: 'DM Mono', monospace;
+            font-size: 10.5px;
+            color: var(--text-muted);
+            padding: 7px 6px 8px;
+            white-space: nowrap;
+            border-radius: 8px 8px 0 0;
+        }
+        .tl-day-head .d-num { color: var(--text); font-weight: 600; font-size: 13px; display:block; }
+        .tl-day-head.today { color: var(--green); }
+        .tl-day-head.today .d-num { color: var(--green); }
+
+        /* lane cells */
+        .tl-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 4px;
+            border-radius: 8px;
+            min-height: 30px;
+            transition: background .15s;
+        }
+        .tl-cell.civil { background: rgba(59,130,246,0.045); }
+        .tl-cell.em    { background: rgba(34,197,94,0.045); }
+        .tl-cell.otros { background: rgba(148,163,184,0.04); }
+
+        /* chips */
+        .tl-chip {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            text-align: left;
+            width: 100%;
+            padding: 6px 8px;
+            border-radius: 7px;
+            border: 1px solid transparent;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 1.25;
+            cursor: pointer;
+            color: var(--text);
+            transition: transform .12s, box-shadow .15s, border-color .15s, background .15s;
+        }
+        .tl-txt {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            min-width: 0;
+        }
+        .tl-tp {
+            font-weight: 700;
+            font-size: 11px;
+            line-height: 1.2;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .tl-tit {
+            font-weight: 400;
+            font-size: 10px;
+            line-height: 1.25;
+            opacity: .82;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .tl-chip .cnt {
+            flex-shrink: 0;
+            font-family: 'DM Mono', monospace;
+            font-size: 9px;
+            font-weight: 500;
+            padding: 1px 5px;
+            border-radius: 99px;
+            background: rgba(255,255,255,0.08);
+            color: var(--text-dim);
+        }
+        .tl-chip:hover { transform: translateY(-1px); }
+
+        .tl-chip.civil {
+            background: var(--civil-dim);
+            border-color: rgba(59,130,246,0.22);
+            color: #dbeafe;
+        }
+        .tl-chip.civil:hover { border-color: var(--civil); box-shadow: 0 3px 12px rgba(59,130,246,0.25); }
+        .tl-chip.civil.active {
+            background: var(--civil);
+            border-color: var(--civil);
+            color: #fff;
+            box-shadow: 0 0 0 2px var(--civil-glow);
+        }
+        .tl-chip.civil.active .cnt { background: rgba(255,255,255,0.22); color: #fff; }
+
+        .tl-chip.em {
+            background: var(--em-dim);
+            border-color: rgba(34,197,94,0.22);
+            color: #dcfce7;
+        }
+        .tl-chip.em:hover { border-color: var(--em); box-shadow: 0 3px 12px rgba(34,197,94,0.25); }
+        .tl-chip.em.active {
+            background: var(--em);
+            border-color: var(--em);
+            color: #06240f;
+            box-shadow: 0 0 0 2px var(--em-glow);
+        }
+        .tl-chip.em.active .cnt { background: rgba(0,0,0,0.18); color: #06240f; }
+
+        .tl-chip.otros {
+            background: var(--otros-dim);
+            border-color: rgba(148,163,184,0.22);
+            color: var(--text-dim);
+        }
+        .tl-chip.otros:hover { border-color: var(--otros); }
+        .tl-chip.otros.active { background: var(--otros); color: #0f1117; border-color: var(--otros); }
+
+        .tl-empty {
+            color: var(--text-muted);
+            opacity: .35;
+            font-size: 11px;
+            text-align: center;
+            padding: 4px 0;
+            user-select: none;
+        }
+
+        @media (max-width: 640px) {
+            .tl-head { padding: 8px 14px; }
+            .tl-scroll { padding: 0 14px 14px; }
+            .tl-grid { grid-auto-columns: minmax(118px, 1fr); }
+        }
     </style>
 </head>
 <body>
@@ -925,11 +1188,11 @@
     <div id="opcionesNiveles" style="display:contents;"></div>
     <div class="field-group">
         <label class="field-label">Desde</label>
-        <input type="date" id="fechaDesde" class="field-input" onchange="applyFilters()">
+        <input type="date" id="fechaDesde" class="field-input" onchange="onFechaRangeChange()">
     </div>
     <div class="field-group">
         <label class="field-label">Hasta</label>
-        <input type="date" id="fechaHasta" class="field-input" onchange="applyFilters()">
+        <input type="date" id="fechaHasta" class="field-input" onchange="onFechaRangeChange()">
     </div>
     <button class="load-btn" id="loadBtn" onclick="loadFolder()">Cargar fotos</button>
 </div>
@@ -959,6 +1222,27 @@
 <div class="status-bar" id="statusBar">
     <svg class="spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
     <span id="statusText">Cargando…</span>
+</div>
+
+<!-- TIMELINE (línea de tiempo por día / disciplina) -->
+<div class="timeline" id="timeline">
+    <div class="tl-head">
+        <span class="tl-head-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+            Línea de tiempo
+        </span>
+        <span class="tl-count" id="tlCount"></span>
+        <div class="tl-spacer"></div>
+        <button class="tl-toggle" id="tlToggle" onclick="toggleTimeline()">
+            <span id="tlToggleText">Ocultar</span>
+            <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m18 15-6-6-6 6"/></svg>
+        </button>
+    </div>
+    <div class="tl-body" id="tlBody">
+        <div class="tl-scroll" id="tlScroll">
+            <div class="tl-grid" id="tlGrid"></div>
+        </div>
+    </div>
 </div>
 
 <!-- GRID -->
@@ -1232,7 +1516,7 @@
             });
 
             buildCatalogIndex();
-            if (allFiles.length) { annotateAllFiles(); updateUnclassifiedPanel(); }
+            if (allFiles.length) { annotateAllFiles(); updateUnclassifiedPanel(); buildTimeline({ scrollEnd: true }); }
 
             // If the user already selected a discipline before the catalog finished loading,
             // refresh the tema dropdown with the now-available catalog
@@ -1645,6 +1929,7 @@
             annotateAllFiles();
             applyFilters();
             updateUnclassifiedPanel();
+            buildTimeline({ scrollEnd: true });
         } catch(err) {
             document.getElementById('statusText').textContent = `Error: ${err.message}`;
         } finally {
@@ -1726,12 +2011,259 @@
         });
 
         renderGrid();
+        refreshTimelineActive();
     }
 
     function clearSearch() {
         const el = document.getElementById('searchBox');
         if (el) { el.value = ''; el.focus(); }
         applyFilters();
+    }
+
+    // ── TIMELINE (línea de tiempo) ─────────────────────────────────────────
+    const TL_HIDDEN_KEY = 'viewer_timeline_hidden';
+
+    // Construye los conjuntos de temas por disciplina a partir del catálogo
+    function _temaSets() {
+        return {
+            civil: new Set((driveTopics.civil || []).map(t => t.label.toLowerCase())),
+            em:    new Set((driveTopics.em    || []).map(t => t.label.toLowerCase())),
+        };
+    }
+
+    function _disciplinaDeTema(temaLower, sets) {
+        if (sets.civil.has(temaLower)) return 'civil';
+        if (sets.em.has(temaLower))    return 'em';
+        return 'otros';
+    }
+
+    // Formatea YYYYMMDD → { num, sub, iso, isToday }
+    function _fechaTimeline(f) {
+        const y = +f.slice(0,4), m = +f.slice(4,6), d = +f.slice(6,8);
+        const dt = new Date(y, m - 1, d);
+        const wd  = dt.toLocaleDateString('es', { weekday: 'short' }).replace('.', '');
+        const mon = dt.toLocaleDateString('es', { month: 'short' }).replace('.', '');
+        const today = new Date();
+        const isToday = today.getFullYear() === y && (today.getMonth() + 1) === m && today.getDate() === d;
+        return { num: String(d), sub: `${wd} ${mon}`, isToday };
+    }
+
+    // Reúne datos y dibuja la línea de tiempo.
+    // opts.scrollEnd = true  → posiciona el scroll en el último día.
+    //                  false → conserva la posición de scroll actual.
+    async function buildTimeline(opts = {}) {
+        const scrollEnd = !!opts.scrollEnd;
+        const tl = document.getElementById('timeline');
+        if (!allFiles.length) { tl.classList.remove('ready'); return; }
+
+        // Asegura que ambos catálogos estén disponibles para clasificar disciplina
+        await Promise.all([loadTopics('civil'), loadTopics('em')]);
+        const sets = _temaSets();
+
+        // Rango de fechas activo: recorta los días mostrados (igual que la galería)
+        const desde = document.getElementById('fechaDesde').value.replace(/-/g, '');
+        const hasta = document.getElementById('fechaHasta').value.replace(/-/g, '');
+
+        // fecha → { civil: Map(clave→{base,titulo,n}), em: Map, otros: Map }
+        // Cada bloque = combinación de TEMA PRINCIPAL (categoría base) + TÍTULO.
+        const byDay = new Map();
+        allFiles.forEach(f => {
+            if (!f.fecha) return;
+            if (desde && f.fecha < desde) return;
+            if (hasta && f.fecha > hasta) return;
+            const full = (f.temaPrincipal || '').trim();
+            if (!full) return;
+            const temaBase = full.split('-')[0].trim();
+            if (!temaBase) return;
+            const titulo = (f.temaSecundario || '').trim();
+            const disc = _disciplinaDeTema(temaBase.toLowerCase(), sets);
+            if (!byDay.has(f.fecha)) byDay.set(f.fecha, { civil: new Map(), em: new Map(), otros: new Map() });
+            const lane = byDay.get(f.fecha)[disc];
+            const key  = temaBase + '\u0000' + titulo;
+            const cur  = lane.get(key) || { base: temaBase, titulo, n: 0 };
+            cur.n++;
+            lane.set(key, cur);
+        });
+
+        const days = [...byDay.keys()].sort();
+        if (!days.length) { tl.classList.remove('ready'); return; }
+
+        // ¿Hay algún tema "otros"? Solo entonces se muestra esa fila.
+        const hayOtros = days.some(d => byDay.get(d).otros.size > 0);
+        const lanes = hayOtros ? ['civil', 'em', 'otros'] : ['civil', 'em'];
+        const laneNombre = { civil: 'Civil', em: 'Electromecánica', otros: 'Otros' };
+
+        // Conserva la posición de scroll antes de re-render (para rebuilds suaves)
+        const scrollEl   = document.getElementById('tlScroll');
+        const prevScroll = scrollEl ? scrollEl.scrollLeft : 0;
+
+        renderTimeline(days, byDay, lanes, laneNombre);
+        document.getElementById('tlCount').textContent =
+            `${days.length} ${days.length === 1 ? 'día' : 'días'}`;
+        tl.classList.add('ready');
+
+        // Estado oculto recordado
+        const hidden = localStorage.getItem(TL_HIDDEN_KEY) === '1';
+        tl.classList.toggle('collapsed', hidden);
+        document.getElementById('tlToggleText').textContent = hidden ? 'Mostrar' : 'Ocultar';
+
+        // Posiciona el scroll: al último día (scrollEnd) o conserva la posición previa
+        requestAnimationFrame(() => {
+            const s = document.getElementById('tlScroll');
+            if (!s) return;
+            s.scrollLeft = scrollEnd ? s.scrollWidth : Math.min(prevScroll, s.scrollWidth);
+        });
+
+        refreshTimelineActive();
+    }
+
+    function renderTimeline(days, byDay, lanes, laneNombre) {
+        const grid = document.getElementById('tlGrid');
+        grid.style.gridTemplateRows = 'auto ' + lanes.map(() => 'auto').join(' ');
+        grid.innerHTML = '';
+
+        const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+        // Columna 1: etiquetas (sticky)
+        grid.insertAdjacentHTML('beforeend', '<div class="tl-sticky tl-corner"></div>');
+        lanes.forEach(l => {
+            grid.insertAdjacentHTML('beforeend',
+                `<div class="tl-sticky tl-lane-label ${l}"><span class="dot"></span>${laneNombre[l]}</div>`);
+        });
+
+        // Una columna por día
+        days.forEach(fecha => {
+            const info = _fechaTimeline(fecha);
+            const frag = [];
+            frag.push(
+                `<div class="tl-day-head${info.isToday ? ' today' : ''}">` +
+                `<span class="d-num">${info.num}</span>${info.sub}</div>`);
+
+            lanes.forEach(l => {
+                const map = byDay.get(fecha)[l];
+                if (!map || map.size === 0) {
+                    frag.push(`<div class="tl-cell ${l}"><div class="tl-empty">·</div></div>`);
+                    return;
+                }
+                const chips = [...map.values()]
+                    .sort((a, b) =>
+                        a.base.localeCompare(b.base, 'es') ||
+                        a.titulo.localeCompare(b.titulo, 'es'))
+                    .map(({ base, titulo, n }) => {
+                        const titLine = titulo ? `<span class="tl-tit">${esc(titulo)}</span>` : '';
+                        const titleAttr = esc(base) + (titulo ? ' — ' + esc(titulo) : '');
+                        return `<button class="tl-chip ${l}" data-disc="${l}" ` +
+                            `data-tema="${esc(base)}" data-titulo="${esc(titulo)}" ` +
+                            `title="${titleAttr} · ${n} foto${n === 1 ? '' : 's'}" ` +
+                            `onclick="seleccionarTemaTimeline(this)">` +
+                            `<span class="tl-txt"><span class="tl-tp">${esc(base)}</span>${titLine}</span>` +
+                            `<span class="cnt">${n}</span></button>`;
+                    })
+                    .join('');
+                frag.push(`<div class="tl-cell ${l}">${chips}</div>`);
+            });
+
+            grid.insertAdjacentHTML('beforeend', frag.join(''));
+        });
+    }
+
+    function refreshTimelineActive() {
+        const disc = document.getElementById('disciplina').value;
+        const tema = document.getElementById('temaPrincipal').value.toLowerCase().trim();
+        const tituloSel = document.querySelector('#opcionesNiveles select[data-type="titulo"]');
+        const sb = document.getElementById('searchBox');
+        const tituloFiltro =
+            (tituloSel && tituloSel.value.trim().toLowerCase()) ||
+            (sb && sb.value.trim().toLowerCase()) || '';
+
+        document.querySelectorAll('.tl-chip').forEach(ch => {
+            if (!disc || !tema || ch.dataset.disc !== disc) { ch.classList.remove('active'); return; }
+            const base = (ch.dataset.tema || '').toLowerCase().trim();
+            const tit  = (ch.dataset.titulo || '').toLowerCase().trim();
+            let on = base === tema;
+            // Si hay un título/búsqueda activo, restringe el resaltado a ese bloque
+            if (on && tituloFiltro) {
+                on = tit === tituloFiltro || tit.includes(tituloFiltro) || tituloFiltro.includes(tit);
+            }
+            ch.classList.toggle('active', on);
+        });
+    }
+
+    // Clic en un bloque → selecciona ese tema principal + título y muestra sus fotos
+    async function seleccionarTemaTimeline(el) {
+        const disc   = el.dataset.disc;
+        const base   = el.dataset.tema || '';
+        const titulo = el.dataset.titulo || '';
+        const sb     = document.getElementById('searchBox');
+
+        // Caso "otros": no está en catálogo → filtrar por texto
+        if (disc === 'otros') {
+            document.getElementById('disciplina').value = '';
+            await onDisciplinaChange();
+            document.getElementById('fechaDesde').value = '';
+            document.getElementById('fechaHasta').value = '';
+            if (sb) sb.value = [base, titulo].filter(Boolean).join(' ');
+            applyFilters();
+            document.getElementById('gridArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return;
+        }
+
+        // 1) Disciplina → puebla el desplegable de temas
+        document.getElementById('disciplina').value = disc;
+        await onDisciplinaChange();
+
+        // 2) Tema principal (categoría base)
+        const mainSel = document.getElementById('temaPrincipal');
+        const opt = Array.from(mainSel.options)
+            .find(o => o.value.toLowerCase() === base.toLowerCase());
+        mainSel.value = opt ? opt.value : base;
+        await onTemaPrincipalChange();   // construye selects de NIVEL y TÍTULO
+
+        // 3) Limpiar niveles (filtramos por título, no por nivel)
+        document.querySelectorAll('#opcionesNiveles select:not([data-type="titulo"])')
+            .forEach(s => s.value = '');
+
+        // 4) Fijar el TÍTULO: si existe en el desplegable se usa; si no, se usa la búsqueda
+        let usadoSelect = false;
+        const tituloSel = document.querySelector('#opcionesNiveles select[data-type="titulo"]');
+        if (titulo && tituloSel) {
+            const o = Array.from(tituloSel.options)
+                .find(op => op.value.trim().toLowerCase() === titulo.trim().toLowerCase());
+            if (o) { tituloSel.value = o.value; usadoSelect = true; }
+        }
+
+        // "Todas sus fotos": sin restricción de fechas
+        const teniaFechas = !!(document.getElementById('fechaDesde').value ||
+                               document.getElementById('fechaHasta').value);
+        document.getElementById('fechaDesde').value = '';
+        document.getElementById('fechaHasta').value = '';
+        if (sb) sb.value = (titulo && !usadoSelect) ? titulo : '';
+
+        applyFilters();
+        // Si había un rango activo, la línea de tiempo vuelve a expandirse a todos los días
+        if (teniaFechas) await buildTimeline();
+        refreshTimelineActive();
+        document.getElementById('gridArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Cambios en el rango Desde/Hasta: filtra la galería y recorta la línea de tiempo
+    function onFechaRangeChange() {
+        applyFilters();
+        buildTimeline({ scrollEnd: true });
+    }
+
+    function toggleTimeline() {
+        const tl = document.getElementById('timeline');
+        const hidden = tl.classList.toggle('collapsed');
+        localStorage.setItem(TL_HIDDEN_KEY, hidden ? '1' : '0');
+        document.getElementById('tlToggleText').textContent = hidden ? 'Mostrar' : 'Ocultar';
+        // Al mostrarla, acomódala al último día
+        if (!hidden) {
+            requestAnimationFrame(() => {
+                const s = document.getElementById('tlScroll');
+                if (s) s.scrollLeft = s.scrollWidth;
+            });
+        }
     }
 
     // ── Render grid ────────────────────────────────────────────────────────
@@ -2331,6 +2863,7 @@
             cancelarEliminar();
             applyFilters();
             updateUnclassifiedPanel();
+            buildTimeline();
 
             if (filtered.length === 0) {
                 closeLightbox();
@@ -2551,6 +3084,7 @@
             loadLbPhoto(lbIndex);
             updateUnclassifiedPanel();
             renderGrid();
+            buildTimeline();
 
             statusEl.className = 'retag-status ok';
             statusEl.textContent = '✓ Nombre actualizado';
@@ -2723,6 +3257,7 @@
             loadLbPhoto(lbIndex);
             updateUnclassifiedPanel();
             renderGrid();
+            buildTimeline();
 
             // Update the displayed name in the modal
             document.getElementById('fechaModalNombre').textContent = newName;
