@@ -1119,6 +1119,56 @@
         .tl-chip.otros:hover { border-color: var(--otros); }
         .tl-chip.otros.active { background: var(--otros); color: #0f1117; border-color: var(--otros); }
 
+        /* grupo: varios subtemas bajo un mismo tema principal */
+        .tl-group {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            padding: 4px;
+            border-radius: 7px;
+            border: 1px solid transparent;
+        }
+        .tl-group.civil { background: var(--civil-dim); border-color: rgba(59,130,246,0.22); }
+        .tl-group.em    { background: var(--em-dim);    border-color: rgba(34,197,94,0.22); }
+        .tl-group.otros { background: var(--otros-dim); border-color: rgba(148,163,184,0.22); }
+        .tl-group-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            padding: 2px 4px 3px;
+        }
+        .tl-group-head .tl-tp {
+            font-weight: 700;
+            font-size: 11px;
+            line-height: 1.2;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .tl-group.civil .tl-group-head { color: #dbeafe; }
+        .tl-group.em    .tl-group-head { color: #dcfce7; }
+        .tl-group.otros .tl-group-head { color: var(--text-dim); }
+        .tl-group-head .cnt {
+            flex-shrink: 0;
+            font-family: 'DM Mono', monospace;
+            font-size: 9px;
+            font-weight: 500;
+            padding: 1px 5px;
+            border-radius: 99px;
+            background: rgba(255,255,255,0.12);
+            color: var(--text-dim);
+        }
+        /* subfilas dentro de un grupo: solo el subtema, fondo tenue */
+        .tl-chip.tl-sub {
+            background: transparent;
+            border-color: transparent;
+            padding: 4px 6px;
+        }
+        .tl-chip.tl-sub:hover { transform: none; background: rgba(255,255,255,0.06); }
+        .tl-chip.tl-sub .cnt { background: rgba(255,255,255,0.06); }
+
         .tl-empty {
             color: var(--text-muted);
             opacity: .35;
@@ -2384,21 +2434,44 @@
                     frag.push(`<div class="tl-cell ${l}"><div class="tl-empty">·</div></div>`);
                     return;
                 }
-                const chips = [...map.values()]
+                // Ordena y agrupa por TEMA PRINCIPAL para no repetir el encabezado
+                const entradas = [...map.values()]
                     .sort((a, b) =>
                         a.base.localeCompare(b.base, 'es', { numeric: true }) ||
-                        a.titulo.localeCompare(b.titulo, 'es', { numeric: true }))
-                    .map(({ base, titulo, n }) => {
-                        const titLine = titulo ? `<span class="tl-tit">${esc(titulo)}</span>` : '';
-                        const titleAttr = esc(base) + (titulo ? ' — ' + esc(titulo) : '');
-                        return `<button class="tl-chip ${l}" data-disc="${l}" ` +
-                            `data-tema="${esc(base)}" data-titulo="${esc(titulo)}" ` +
-                            `title="${titleAttr} · ${n} foto${n === 1 ? '' : 's'}" ` +
-                            `onclick="seleccionarTemaTimeline(this)">` +
-                            `<span class="tl-txt"><span class="tl-tp">${esc(base)}</span>${titLine}</span>` +
-                            `<span class="cnt">${n}</span></button>`;
-                    })
-                    .join('');
+                        a.titulo.localeCompare(b.titulo, 'es', { numeric: true }));
+
+                const grupos = new Map();   // base → { base, total, subs: [] }
+                entradas.forEach(it => {
+                    let g = grupos.get(it.base);
+                    if (!g) { g = { base: it.base, total: 0, subs: [] }; grupos.set(it.base, g); }
+                    g.total += it.n;
+                    g.subs.push(it);
+                });
+
+                const subChip = ({ base, titulo, n }, soloTitulo) => {
+                    const titleAttr = esc(base) + (titulo ? ' — ' + esc(titulo) : '');
+                    const cuerpo = soloTitulo
+                        ? `<span class="tl-txt"><span class="tl-tit">${esc(titulo || '—')}</span></span>`
+                        : `<span class="tl-txt"><span class="tl-tp">${esc(base)}</span>` +
+                          `${titulo ? `<span class="tl-tit">${esc(titulo)}</span>` : ''}</span>`;
+                    return `<button class="tl-chip ${soloTitulo ? 'tl-sub ' : ''}${l}" data-disc="${l}" ` +
+                        `data-tema="${esc(base)}" data-titulo="${esc(titulo)}" ` +
+                        `title="${titleAttr} · ${n} foto${n === 1 ? '' : 's'}" ` +
+                        `onclick="seleccionarTemaTimeline(this)">` +
+                        cuerpo + `<span class="cnt">${n}</span></button>`;
+                };
+
+                const chips = [...grupos.values()].map(g => {
+                    // Un solo subtema → chip individual (igual que antes)
+                    if (g.subs.length === 1) return subChip(g.subs[0], false);
+                    // Varios subtemas del mismo tema → encabezado único + subfilas
+                    const subFilas = g.subs.map(s => subChip(s, true)).join('');
+                    return `<div class="tl-group ${l}">` +
+                        `<div class="tl-group-head"><span class="tl-tp">${esc(g.base)}</span>` +
+                        `<span class="cnt">${g.total}</span></div>` +
+                        subFilas + `</div>`;
+                }).join('');
+
                 frag.push(`<div class="tl-cell ${l}">${chips}</div>`);
             });
 
