@@ -942,6 +942,89 @@
         .inf-save:hover { opacity: .9; }
         .inf-save:disabled { opacity: .5; cursor: default; }
 
+        /* ── BOTÓN PDF EN EL ENCABEZADO DEL DÍA ── */
+        .tl-pdf-btn {
+            display: block;
+            margin: 0 auto 3px;
+            cursor: pointer;
+            font-family: 'DM Mono', monospace;
+            font-size: 8px; font-weight: 600; letter-spacing: .04em;
+            color: var(--accent);
+            background: rgba(59,130,246,.12);
+            border: 1px solid rgba(59,130,246,.3);
+            border-radius: 5px;
+            padding: 1px 7px;
+            line-height: 1.4;
+        }
+        .tl-pdf-btn:hover { background: rgba(59,130,246,.24); }
+
+        /* ── MODAL PREVISUALIZACIÓN PDF ── */
+        #pdfModal {
+            display: none; position: fixed; inset: 0; z-index: 340;
+            background: rgba(5,7,12,.78); backdrop-filter: blur(8px);
+            align-items: center; justify-content: center; padding: 16px;
+        }
+        #pdfModal.open { display: flex; animation: lbIn .15s ease; }
+        .pdf-box {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 18px; width: 100%; max-width: 840px; height: 92vh;
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 40px 80px rgba(0,0,0,.5);
+        }
+        .pdf-modal-head {
+            padding: 16px 22px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        }
+        .pdf-modal-title { font-size: 15px; font-weight: 600; color: var(--text); }
+        .pdf-frame-wrap { flex: 1; position: relative; background: #525659; min-height: 0; }
+        #pdfFrame { width: 100%; height: 100%; border: 0; display: block; }
+        .pdf-loading {
+            position: absolute; inset: 0; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 14px;
+            color: var(--text-dim); font-size: 13px; background: var(--surface);
+        }
+        .pdf-spin {
+            width: 34px; height: 34px; border: 3px solid var(--border);
+            border-top-color: var(--accent); border-radius: 50%;
+            animation: pdfspin .8s linear infinite;
+        }
+        @keyframes pdfspin { to { transform: rotate(360deg); } }
+        .pdf-foot {
+            padding: 12px 22px; border-top: 1px solid var(--border);
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        /* ── DOCUMENTO PARA RENDERIZAR (oculto fuera de pantalla) ── */
+        #pdfRender { position: fixed; left: -10000px; top: 0; width: 800px; }
+        .pdfdoc { width: 800px; background: #fff; color: #1a1a1a;
+            font-family: 'DM Sans', Arial, sans-serif; font-size: 11px; line-height: 1.45; }
+        .pdfdoc * { box-sizing: border-box; }
+        .pdf-border { border: 1.5px solid #222; }
+        .pdf-head { text-align: center; padding: 10px 12px; border-bottom: 1px solid #222; position: relative; }
+        .pdf-head .org { font-weight: 700; font-size: 12px; }
+        .pdf-head .sub { font-size: 10px; }
+        .pdf-head .proj { font-weight: 700; font-size: 15px; margin-top: 3px; }
+        .pdf-head .doc { font-size: 10px; margin-top: 1px; color: #333; }
+        .pdf-logo { position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+            font-weight: 800; font-style: italic; font-size: 24px; color: #f7941d; letter-spacing: 1px; }
+        .pdf-meta { display: flex; border-bottom: 1px solid #222; }
+        .pdf-meta > div { padding: 5px 10px; font-size: 10.5px; border-right: 1px solid #bbb; }
+        .pdf-meta > div:last-child { border-right: none; }
+        .pdf-section-title { background: #e9e9e9; text-align: center; font-weight: 700;
+            font-size: 11px; padding: 4px; border-bottom: 1px solid #222; border-top: 1px solid #222; }
+        .pdf-acts { padding: 8px 14px; }
+        .pdf-act { margin: 0 0 7px; text-align: justify; page-break-inside: avoid; }
+        .pdf-act .lead { font-weight: 700; }
+        .pdf-disc { font-weight: 700; font-size: 11px; margin: 9px 0 5px; color: #444;
+            border-bottom: 1px dotted #aaa; padding-bottom: 2px; }
+        .pdf-fotos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 10px 14px; }
+        .pdf-fig { page-break-inside: avoid; text-align: center; }
+        .pdf-fig img { width: 100%; height: 128px; object-fit: cover; border: 1px solid #999; display: block; }
+        .pdf-cap { font-size: 8.5px; margin-top: 3px; line-height: 1.25; }
+        .pdf-fill { padding: 6px 14px; min-height: 26px; }
+        .pdf-resp { width: 100%; border-collapse: collapse; }
+        .pdf-resp td { border: 1px solid #222; padding: 7px 9px; font-size: 9.5px; }
+
         /* ── FECHA MODAL ── */
         #fechaModal {
             display: none;
@@ -1849,6 +1932,31 @@
     </div>
 </div>
 
+<!-- MODAL PREVISUALIZACIÓN PDF -->
+<div id="pdfModal">
+    <div class="pdf-box">
+        <div class="pdf-modal-head">
+            <div class="pdf-modal-title" id="pdfTitulo">Informe diario</div>
+            <button class="settings-close" onclick="cerrarPdf()">×</button>
+        </div>
+        <div class="pdf-frame-wrap">
+            <iframe id="pdfFrame" title="Previsualización del informe"></iframe>
+            <div class="pdf-loading" id="pdfLoading">
+                <div class="pdf-spin"></div>
+                <div id="pdfLoadingText">Generando informe…</div>
+            </div>
+        </div>
+        <div class="pdf-foot">
+            <div class="inf-status" id="pdfStatus"></div>
+            <button class="inf-cancel" onclick="cerrarPdf()">Cerrar</button>
+            <button class="inf-save" id="pdfDownloadBtn" onclick="descargarPdf()" disabled>Descargar PDF</button>
+        </div>
+    </div>
+</div>
+
+<!-- Contenedor oculto donde se arma el documento antes de convertirlo a PDF -->
+<div id="pdfRender" aria-hidden="true"></div>
+
 <script>
     // ── Constants ──────────────────────────────────────────────────────────
     const TOPICS_CIVIL_URL   = 'https://raw.githubusercontent.com/registrodeinformesdiarios-svg/marcas-agua-supervision/refs/heads/main/TitulosCivil.txt';
@@ -2665,6 +2773,7 @@
             const frag = [];
             frag.push(
                 `<div class="tl-day-head${info.isToday ? ' today' : ''}">` +
+                `<button class="tl-pdf-btn" title="Generar PDF del informe de este día" onclick="abrirPdfDia('${fecha}')">PDF</button>` +
                 `<span class="d-num">${info.num}</span>${info.sub}</div>`);
 
             lanes.forEach(l => {
@@ -4206,12 +4315,234 @@
         });
     }
 
+    // ── PREVISUALIZACIÓN / GENERACIÓN DE PDF DEL INFORME DIARIO ──────────────
+    let _pdfBlobUrl  = null;
+    let _pdfFilename = '';
+    let _html2pdfP   = null;
+
+    function _loadHtml2Pdf() {
+        if (window.html2pdf) return Promise.resolve();
+        if (_html2pdfP) return _html2pdfP;
+        _html2pdfP = new Promise((ok, bad) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js';
+            s.onload  = () => ok();
+            s.onerror = () => bad(new Error('No se pudo cargar la librería de PDF'));
+            document.head.appendChild(s);
+        });
+        return _html2pdfP;
+    }
+
+    function setPdfStatus(msg, tipo = 'info') {
+        const el = document.getElementById('pdfStatus');
+        el.textContent = msg;
+        el.className = 'inf-status ' + tipo;
+    }
+
+    // Texto de la versión activa de una entrada del informe
+    function _textoActivo(e) {
+        const v = (e && Array.isArray(e.versiones)) ? e.versiones : [];
+        if (!v.length) return '';
+        const idx = (typeof e.activa === 'number' && e.activa >= 0 && e.activa < v.length) ? e.activa : v.length - 1;
+        return v[idx].texto || '';
+    }
+
+    // Foto → dataURL (jpeg) descargada de Drive, reducida y con la marca de agua
+    // aplicada igual que en la galería (con_marca = se dibuja; fija = ya viene incrustada).
+    async function _fotoDataUrl(file, maxDim = 1100) {
+        const apiKey = localStorage.getItem('viewer_api_key');
+        const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media&key=${apiKey}`);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+        try {
+            const img = await new Promise((ok, bad) => {
+                const i = new Image();
+                i.onload = () => ok(i); i.onerror = () => bad(new Error('img'));
+                i.src = url;
+            });
+            let w = img.naturalWidth, h = img.naturalHeight;
+            const s = Math.min(1, maxDim / Math.max(w, h));
+            w = Math.round(w * s); h = Math.round(h * s);
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            const ctx = c.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            if (file.marcaEstado === 'con_marca') drawMarcaOnContext(ctx, w, h, datosMarca(file));
+            return c.toDataURL('image/jpeg', 0.8);
+        } finally { URL.revokeObjectURL(url); }
+    }
+
+    function _escPdf(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Arma el HTML del informe con el formato del protocolo ICE
+    function construirHtmlInforme(fIso, entradas, fotos) {
+        const proyecto = (entradas[0] && entradas[0].proyecto) || PROYECTO_PARAM || 'Subestación';
+        const discNom  = { civil: 'Obra Civil', em: 'Obra Electromecánica', otros: 'Otras actividades' };
+        const discsPresentes = [...new Set(entradas.map(e => e.disciplina))];
+
+        let actsHtml = '', curDisc = null;
+        entradas.forEach(e => {
+            const texto = _escPdf(_textoActivo(e)).replace(/\n+/g, '<br>');
+            if (!texto) return;
+            if (discsPresentes.length > 1 && e.disciplina !== curDisc) {
+                curDisc = e.disciplina;
+                actsHtml += `<div class="pdf-disc">${_escPdf(discNom[curDisc] || 'Actividades')}</div>`;
+            }
+            const titulo = [e.tema, e.titulo].filter(Boolean).join(' — ');
+            actsHtml += `<p class="pdf-act"><span class="lead">${_escPdf(titulo)}: </span>${texto}</p>`;
+        });
+
+        let figs = '';
+        fotos.forEach((ph, i) => {
+            const cap = ph.file.temaSecundario || ph.entrada.titulo || ph.entrada.tema || '';
+            figs += `<div class="pdf-fig"><img src="${ph.dataUrl}">` +
+                    `<div class="pdf-cap"><b>Fotografía ${i + 1}.</b> ${_escPdf(cap)}</div></div>`;
+        });
+
+        return `
+        <div class="pdfdoc pdf-border">
+          <div class="pdf-head">
+            <div class="pdf-logo">ICE</div>
+            <div class="org">INSTITUTO COSTARRICENSE DE ELECTRICIDAD</div>
+            <div class="sub">Dirección de Infraestructura y Servicios Asociados (DISA)</div>
+            <div class="sub">Bloque de Conectividad</div>
+            <div class="proj">${_escPdf(proyecto)}</div>
+            <div class="doc">Informe de actividad diaria</div>
+          </div>
+          <div class="pdf-meta">
+            <div style="flex:2"><b>Fecha:</b> ${fIso}</div>
+            <div style="flex:1.2"><b>Hora inicial:</b> </div>
+            <div style="flex:1.2"><b>Hora final:</b> </div>
+            <div style="flex:1.5"><b>N° Registro:</b> </div>
+          </div>
+          <div class="pdf-section-title">Actividades realizadas y supervisadas</div>
+          <div class="pdf-acts">${actsHtml || '<p class="pdf-act">Sin actividades registradas.</p>'}</div>
+          ${figs ? `<div class="pdf-section-title">Fotografías</div><div class="pdf-fotos">${figs}</div>` : ''}
+          <div class="pdf-section-title">Descripción del clima</div>
+          <div class="pdf-fill"></div>
+          <div class="pdf-section-title">Observaciones</div>
+          <div class="pdf-fill" style="min-height:48px"></div>
+          <div class="pdf-section-title">Responsables</div>
+          <table class="pdf-resp">
+            <tr><td style="width:55%">Supervisión Técnica ICE</td><td>Firma</td></tr>
+            <tr><td>Ing. Encargado de Obra CMI</td><td></td></tr>
+            <tr><td>Ing. Encargado de Obra Electromecánica</td><td></td></tr>
+            <tr><td>Encargado de Obra Electromecánica</td><td></td></tr>
+          </table>
+        </div>`;
+    }
+
+    async function abrirPdfDia(fecha) {
+        const modal = document.getElementById('pdfModal');
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+
+        const frame = document.getElementById('pdfFrame');
+        frame.removeAttribute('src');
+        document.getElementById('pdfLoading').style.display = 'flex';
+        document.getElementById('pdfLoadingText').textContent = 'Recopilando informe del día…';
+        document.getElementById('pdfDownloadBtn').disabled = true;
+        setPdfStatus('', 'info');
+
+        const fIso = `${fecha.slice(0,4)}-${fecha.slice(4,6)}-${fecha.slice(6,8)}`;
+        document.getElementById('pdfTitulo').textContent = `Informe diario · ${fIso}`;
+
+        try {
+            const dia      = await cargarInformeDia(fecha);
+            const entradas = (dia && dia.entradas) ? Object.values(dia.entradas) : [];
+            const utiles   = entradas.filter(e =>
+                _textoActivo(e).trim() || (Array.isArray(e.fotos) && e.fotos.length));
+
+            if (!utiles.length) {
+                document.getElementById('pdfLoading').style.display = 'none';
+                setPdfStatus('No hay informe (textos ni fotos) registrado para este día. Agrégalo con doble clic en un tema.', 'err');
+                return;
+            }
+
+            const ordenDisc = { civil: 0, em: 1, otros: 2 };
+            utiles.sort((a, b) =>
+                (ordenDisc[a.disciplina] ?? 9) - (ordenDisc[b.disciplina] ?? 9) ||
+                (a.tema   || '').localeCompare(b.tema   || '', 'es', { numeric: true }) ||
+                (a.titulo || '').localeCompare(b.titulo || '', 'es', { numeric: true }));
+
+            // Reúne las fotos seleccionadas en el mismo orden que las actividades
+            const fotos = [];
+            utiles.forEach(e => (e.fotos || []).forEach(fid => {
+                const file = allFiles.find(x => x.id === fid);
+                if (file) fotos.push({ file, entrada: e });
+            }));
+
+            document.getElementById('pdfLoadingText').textContent =
+                `Procesando ${fotos.length} fotografía(s)…`;
+            for (const ph of fotos) {
+                try { ph.dataUrl = await _fotoDataUrl(ph.file); }
+                catch (_) { ph.dataUrl = null; }
+            }
+            const fotosOk = fotos.filter(p => p.dataUrl);
+
+            document.getElementById('pdfLoadingText').textContent = 'Generando PDF…';
+            const cont = document.getElementById('pdfRender');
+            cont.innerHTML = construirHtmlInforme(fIso, utiles, fotosOk);
+
+            await _loadHtml2Pdf();
+            const opt = {
+                margin:      [10, 10, 12, 10],
+                filename:    `Informe_${fecha}.pdf`,
+                image:       { type: 'jpeg', quality: 0.92 },
+                html2canvas: { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true },
+                jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:   { mode: ['css', 'legacy'] }
+            };
+            const blob = await html2pdf().set(opt).from(cont.firstElementChild).outputPdf('blob');
+
+            if (_pdfBlobUrl) URL.revokeObjectURL(_pdfBlobUrl);
+            _pdfBlobUrl  = URL.createObjectURL(blob);
+            _pdfFilename = opt.filename;
+            frame.src    = _pdfBlobUrl;
+
+            document.getElementById('pdfLoading').style.display = 'none';
+            document.getElementById('pdfDownloadBtn').disabled = false;
+            const fall = fotos.length - fotosOk.length;
+            setPdfStatus(`✓ ${utiles.length} actividad(es) · ${fotosOk.length} foto(s)` +
+                (fall ? ` · ${fall} no se pudieron cargar` : ''), 'ok');
+        } catch (err) {
+            document.getElementById('pdfLoading').style.display = 'none';
+            setPdfStatus('Error al generar el PDF: ' + err.message, 'err');
+        }
+    }
+
+    function descargarPdf() {
+        if (!_pdfBlobUrl) return;
+        const a = document.createElement('a');
+        a.href = _pdfBlobUrl;
+        a.download = _pdfFilename || 'Informe.pdf';
+        a.click();
+    }
+
+    function cerrarPdf() {
+        document.getElementById('pdfModal').classList.remove('open');
+        document.body.style.overflow = '';
+        const frame = document.getElementById('pdfFrame');
+        frame.removeAttribute('src');
+        if (_pdfBlobUrl) { URL.revokeObjectURL(_pdfBlobUrl); _pdfBlobUrl = null; }
+        document.getElementById('pdfRender').innerHTML = '';
+    }
+
     // Cierre del modal con clic en el fondo o tecla Escape
     document.getElementById('informeModal').addEventListener('click', function (e) {
         if (e.target === this) cerrarInforme();
     });
+    document.getElementById('pdfModal').addEventListener('click', function (e) {
+        if (e.target === this) cerrarPdf();
+    });
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && document.getElementById('informeModal').classList.contains('open')) cerrarInforme();
+        if (e.key !== 'Escape') return;
+        if (document.getElementById('pdfModal').classList.contains('open'))      cerrarPdf();
+        else if (document.getElementById('informeModal').classList.contains('open')) cerrarInforme();
     });
 </script>
 </body>
