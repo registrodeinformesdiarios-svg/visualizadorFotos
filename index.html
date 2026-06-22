@@ -757,6 +757,191 @@
         .lb-toast.ok  { background: rgba(34,197,94,.15);  color: var(--green); }
         .lb-toast.err { background: rgba(239,68,68,.15);  color: #f87171; }
 
+        /* ── INDICADOR DE INFORME EN EL CHIP ── */
+        .tl-chip { position: relative; }
+        .tl-inf-dot {
+            position: absolute;
+            top: 3px; right: 3px;
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 0 2px var(--surface);
+            display: none;
+        }
+        .tl-chip.has-informe .tl-inf-dot { display: block; }
+
+        /* ── MODAL INFORME DEL DÍA ── */
+        #informeModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 320;
+            background: rgba(5,7,12,0.7);
+            backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        #informeModal.open { display: flex; animation: lbIn .15s ease; }
+
+        .inf-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            width: 100%;
+            max-width: 640px;
+            max-height: 92vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 40px 80px rgba(0,0,0,.5);
+            overflow: hidden;
+        }
+        .inf-head {
+            padding: 20px 24px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .inf-head-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .inf-title { font-size: 16px; font-weight: 600; color: var(--text); }
+        .inf-sub {
+            font-size: 11px;
+            font-family: 'DM Mono', monospace;
+            color: var(--text-muted);
+            margin-top: 4px;
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+        }
+        .inf-disc-tag {
+            padding: 1px 8px; border-radius: 6px; font-weight: 600;
+            font-family: 'DM Sans', sans-serif; font-size: 10px;
+        }
+        .inf-disc-tag.civil { background: rgba(59,130,246,.18); color: #93c5fd; }
+        .inf-disc-tag.em    { background: rgba(34,197,94,.18);  color: #86efac; }
+        .inf-disc-tag.otros { background: rgba(148,163,184,.18); color: var(--text-dim); }
+
+        .inf-body {
+            padding: 18px 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .inf-section-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .inf-textarea {
+            width: 100%;
+            min-height: 130px;
+            resize: vertical;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            line-height: 1.55;
+            padding: 12px 14px;
+            box-sizing: border-box;
+        }
+        .inf-textarea:focus { outline: none; border-color: var(--accent); }
+
+        .inf-ia-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+        .inf-ia-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 14px;
+            background: rgba(59,130,246,.12);
+            border: 1px solid rgba(59,130,246,.3);
+            border-radius: 9px;
+            color: #93c5fd;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px; font-weight: 600;
+            cursor: pointer; transition: background .15s;
+        }
+        .inf-ia-btn:hover { background: rgba(59,130,246,.2); }
+        .inf-ia-btn:disabled { opacity: .5; cursor: default; }
+
+        /* Historial de versiones */
+        .inf-versiones { display: flex; flex-wrap: wrap; gap: 6px; }
+        .inf-ver-chip {
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text-dim);
+            font-size: 11px;
+            font-family: 'DM Mono', monospace;
+            cursor: pointer;
+            transition: all .12s;
+        }
+        .inf-ver-chip:hover { border-color: var(--border-hover); color: var(--text); }
+        .inf-ver-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .inf-ver-chip.ia.active { background: #8b5cf6; border-color: #8b5cf6; }
+        .inf-ver-empty { font-size: 11px; color: var(--text-muted); font-style: italic; }
+
+        /* Selección de fotos */
+        .inf-fotos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+            gap: 8px;
+        }
+        .inf-foto {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 9px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+            background: var(--surface2);
+        }
+        .inf-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .inf-foto:hover { border-color: var(--border-hover); }
+        .inf-foto.sel { border-color: var(--green); }
+        .inf-foto.sel::after { content: ''; position: absolute; inset: 0; background: rgba(34,197,94,.18); }
+        .inf-foto-badge {
+            position: absolute; top: 4px; left: 4px; z-index: 2;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: var(--green); color: #0a1a0f;
+            font-size: 11px; font-weight: 700;
+            display: none; align-items: center; justify-content: center;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .inf-foto.sel .inf-foto-badge { display: flex; }
+        .inf-fotos-empty { font-size: 12px; color: var(--text-muted); padding: 8px 0; }
+
+        .inf-foot {
+            padding: 14px 24px 18px;
+            border-top: 1px solid var(--border);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .inf-status { flex: 1; font-size: 11px; font-family: 'DM Mono', monospace; min-height: 16px; }
+        .inf-status.ok  { color: var(--green); }
+        .inf-status.err { color: #f87171; }
+        .inf-status.info { color: var(--text-muted); }
+        .inf-cancel {
+            padding: 9px 18px; background: var(--surface2);
+            border: 1px solid var(--border); border-radius: 9px;
+            color: var(--text-dim); font-family: 'DM Sans', sans-serif;
+            font-size: 13px; cursor: pointer;
+        }
+        .inf-cancel:hover { color: var(--text); border-color: var(--border-hover); }
+        .inf-save {
+            padding: 9px 20px; background: var(--green);
+            border: none; border-radius: 9px; color: #0a1a0f;
+            font-family: 'DM Sans', sans-serif; font-weight: 700;
+            font-size: 13px; cursor: pointer; transition: opacity .15s;
+        }
+        .inf-save:hover { opacity: .9; }
+        .inf-save:disabled { opacity: .5; cursor: default; }
+
         /* ── FECHA MODAL ── */
         #fechaModal {
             display: none;
@@ -1612,6 +1797,58 @@
     </div>
 </div>
 
+<!-- MODAL INFORME DEL DÍA -->
+<div id="informeModal">
+    <div class="inf-box">
+        <div class="inf-head">
+            <div class="inf-head-top">
+                <div>
+                    <div class="inf-title" id="infTitulo">Informe del día</div>
+                    <div class="inf-sub" id="infSub"></div>
+                </div>
+                <button class="settings-close" onclick="cerrarInforme()">×</button>
+            </div>
+        </div>
+
+        <div class="inf-body">
+            <div>
+                <div class="inf-section-label">
+                    <span>Descripción de lo realizado</span>
+                    <span id="infVerActual" style="font-weight:400;text-transform:none;letter-spacing:0;"></span>
+                </div>
+                <textarea id="infTexto" class="inf-textarea"
+                          placeholder="Describe brevemente lo que se realizó este día en este tema…"></textarea>
+                <div class="inf-ia-row">
+                    <button class="inf-ia-btn" id="infIaBtn" onclick="mejorarInformeIA()">
+                        ✨ Mejorar con IA
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <div class="inf-section-label"><span>Versiones del texto</span></div>
+                <div class="inf-versiones" id="infVersiones">
+                    <span class="inf-ver-empty">Sin versiones guardadas todavía.</span>
+                </div>
+            </div>
+
+            <div>
+                <div class="inf-section-label">
+                    <span>Fotos más relevantes</span>
+                    <span id="infFotosCount" style="font-weight:400;text-transform:none;letter-spacing:0;">0 / 3</span>
+                </div>
+                <div class="inf-fotos-grid" id="infFotosGrid"></div>
+            </div>
+        </div>
+
+        <div class="inf-foot">
+            <div class="inf-status" id="infStatus"></div>
+            <button class="inf-cancel" onclick="cerrarInforme()">Cerrar</button>
+            <button class="inf-save" id="infSaveBtn" onclick="guardarInformeDia()">Guardar</button>
+        </div>
+    </div>
+</div>
+
 <script>
     // ── Constants ──────────────────────────────────────────────────────────
     const TOPICS_CIVIL_URL   = 'https://raw.githubusercontent.com/registrodeinformesdiarios-svg/marcas-agua-supervision/refs/heads/main/TitulosCivil.txt';
@@ -2112,6 +2349,7 @@
             applyFilters();
             updateUnclassifiedPanel();
             buildTimeline({ scrollEnd: true });
+            precargarInformes();   // marca los temas que ya tienen comentarios
         } catch(err) {
             document.getElementById('statusText').textContent = `Error: ${err.message}`;
         } finally {
@@ -2313,6 +2551,7 @@
         });
 
         refreshTimelineActive();
+        marcarChipsConInforme();
     }
 
     // ── Datos y render de la vista GENERAL (Gantt semanal por tema principal) ──
@@ -2455,10 +2694,11 @@
                         : `<span class="tl-txt"><span class="tl-tp">${esc(base)}</span>` +
                           `${titulo ? `<span class="tl-tit">${esc(titulo)}</span>` : ''}</span>`;
                     return `<button class="tl-chip ${soloTitulo ? 'tl-sub ' : ''}${l}" data-disc="${l}" ` +
-                        `data-tema="${esc(base)}" data-titulo="${esc(titulo)}" ` +
-                        `title="${titleAttr} · ${n} foto${n === 1 ? '' : 's'}" ` +
-                        `onclick="seleccionarTemaTimeline(this)">` +
-                        cuerpo + `<span class="cnt">${n}</span></button>`;
+                        `data-fecha="${fecha}" data-tema="${esc(base)}" data-titulo="${esc(titulo)}" ` +
+                        `title="${titleAttr} · ${n} foto${n === 1 ? '' : 's'} · doble clic: informe del día" ` +
+                        `onclick="tlChipTap(this)" ondblclick="tlChipDbl(this)">` +
+                        cuerpo + `<span class="cnt">${n}</span>` +
+                        `<span class="tl-inf-dot" title="Tiene informe guardado"></span></button>`;
                 };
 
                 const chips = [...grupos.values()].map(g => {
@@ -3622,6 +3862,357 @@
             statusEl.textContent = 'Error: ' + err.message;
         }
     }
+
+    // ── INFORME DIARIO POR TEMA (doble clic en la línea de tiempo) ───────────
+    // Estructura del archivo informe_YYYYMMDD.json en la carpeta de Drive:
+    // {
+    //   fecha: "YYYYMMDD", proyecto, actualizado,
+    //   entradas: {
+    //     "disc|||tema|||titulo": {
+    //        disciplina, tema, titulo,
+    //        fotos: [fileId1, fileId2, fileId3],   // máx 3
+    //        versiones: [ { tipo:'manual'|'ia', texto, ts }, ... ],
+    //        activa: <índice de la versión mostrada>
+    //     }, ...
+    //   }
+    // }
+    let _informesCache   = {};   // fecha → objeto del día (o null si no existe)
+    let _infActual       = null; // { fecha, disc, tema, titulo, key }
+    let _infFotosSel     = [];   // fileIds seleccionados (orden = relevancia)
+    let _infVerActivaIdx = -1;   // índice de versión activa en el textarea
+    let _tlClickTimer    = null; // distingue clic simple de doble clic
+
+    // Despacho de clic en chip: el clic simple (seleccionar tema) se retrasa
+    // ~220 ms para que un doble clic lo cancele y abra el informe en su lugar.
+    function tlChipTap(el) {
+        if (_tlClickTimer) { clearTimeout(_tlClickTimer); _tlClickTimer = null; }
+        _tlClickTimer = setTimeout(() => { _tlClickTimer = null; seleccionarTemaTimeline(el); }, 220);
+    }
+    function tlChipDbl(el) {
+        if (_tlClickTimer) { clearTimeout(_tlClickTimer); _tlClickTimer = null; }
+        abrirInformeDia(el);
+    }
+
+    function _infKey(disc, tema, titulo) {
+        return [ (disc   || '').toLowerCase().trim(),
+                 (tema   || '').toLowerCase().trim(),
+                 (titulo || '').toLowerCase().trim() ].join('|||');
+    }
+
+    function setInfStatus(msg, tipo = 'info') {
+        const el = document.getElementById('infStatus');
+        el.textContent = msg;
+        el.className = 'inf-status ' + tipo;
+    }
+
+    // Descarga (con caché) el informe del día desde Drive vía Drive API REST
+    async function cargarInformeDia(fecha) {
+        if (_informesCache[fecha] !== undefined) return _informesCache[fecha];
+        const apiKey   = localStorage.getItem('viewer_api_key');
+        const folderId = document.getElementById('folderId').value.trim();
+        if (!apiKey || !folderId) { _informesCache[fecha] = null; return null; }
+        try {
+            const nombre = `informe_${fecha}.json`;
+            const params = new URLSearchParams({
+                q: `name = '${nombre}' and '${folderId}' in parents and trashed = false`,
+                fields: 'files(id,name,modifiedTime)',
+                key: apiKey
+            });
+            const res  = await fetch(`https://www.googleapis.com/drive/v3/files?${params}`);
+            const data = await res.json();
+            if (data.error) throw new Error(data.error.message);
+            const file = (data.files || [])[0];
+            if (!file) { _informesCache[fecha] = null; return null; }
+            const r2  = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media&key=${apiKey}`);
+            const obj = await r2.json();
+            obj._fileId = file.id;
+            _informesCache[fecha] = obj;
+            return obj;
+        } catch (err) {
+            console.warn('No se pudo cargar informe del día', err);
+            _informesCache[fecha] = null;
+            return null;
+        }
+    }
+
+    // Fotos de allFiles que pertenecen a este día + tema (+ título si aplica)
+    function _fotosTemaDia(fecha, tema, titulo) {
+        const t  = (tema   || '').toLowerCase().trim();
+        const ti = (titulo || '').toLowerCase().trim();
+        return allFiles.filter(f => {
+            if (f.fecha !== fecha) return false;
+            const base = ((f.temaPrincipal || '').split('-')[0] || '').toLowerCase().trim();
+            if (base !== t) return false;
+            if (ti && (f.temaSecundario || '').toLowerCase().trim() !== ti) return false;
+            return true;
+        });
+    }
+
+    async function abrirInformeDia(el) {
+        const fecha  = el.dataset.fecha  || '';
+        const disc   = el.dataset.disc   || '';
+        const tema   = el.dataset.tema   || '';
+        const titulo = el.dataset.titulo || '';
+        if (!fecha || !tema) return;
+
+        _infActual       = { fecha, disc, tema, titulo, key: _infKey(disc, tema, titulo) };
+        _infFotosSel     = [];
+        _infVerActivaIdx = -1;
+
+        // Cabecera
+        document.getElementById('infTitulo').textContent = tema + (titulo ? ' — ' + titulo : '');
+        const fIso = `${fecha.slice(0,4)}-${fecha.slice(4,6)}-${fecha.slice(6,8)}`;
+        const discNombre = { civil: 'Civil', em: 'Electromecánica', otros: 'Otros' }[disc] || 'Otros';
+        document.getElementById('infSub').innerHTML =
+            `<span class="inf-disc-tag ${disc}">${discNombre}</span><span>${fIso}</span>`;
+
+        // Abrir modal
+        const modal = document.getElementById('informeModal');
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('infTexto').value = '';
+        setInfStatus('Cargando informe del día…', 'info');
+
+        // Cargar informe existente
+        const dia     = await cargarInformeDia(fecha);
+        const entrada = (dia && dia.entradas && dia.entradas[_infActual.key]) || null;
+
+        if (entrada) {
+            _infFotosSel = Array.isArray(entrada.fotos) ? entrada.fotos.slice(0, 3) : [];
+            const vers = Array.isArray(entrada.versiones) ? entrada.versiones : [];
+            _infVerActivaIdx = (typeof entrada.activa === 'number' && entrada.activa >= 0 && entrada.activa < vers.length)
+                ? entrada.activa : (vers.length - 1);
+            if (_infVerActivaIdx >= 0) document.getElementById('infTexto').value = vers[_infVerActivaIdx].texto || '';
+            setInfStatus('', 'info');
+        } else {
+            setInfStatus('Nuevo informe para este tema.', 'info');
+        }
+
+        renderInformeVersiones(entrada);
+        renderInformeFotos();
+    }
+
+    function cerrarInforme() {
+        document.getElementById('informeModal').classList.remove('open');
+        document.body.style.overflow = '';
+        _infActual = null;
+    }
+
+    function actualizarContadorFotos() {
+        document.getElementById('infFotosCount').textContent = `${_infFotosSel.length} / 3`;
+    }
+
+    function renderInformeFotos() {
+        const grid   = document.getElementById('infFotosGrid');
+        const apiKey = localStorage.getItem('viewer_api_key') || '';
+        const fotos  = _fotosTemaDia(_infActual.fecha, _infActual.tema, _infActual.titulo);
+
+        if (!fotos.length) {
+            grid.innerHTML = '<div class="inf-fotos-empty">No hay fotos de este tema en este día.</div>';
+            actualizarContadorFotos();
+            return;
+        }
+
+        grid.innerHTML = fotos.map(f => {
+            const thumb = f.thumbnailLink
+                ? f.thumbnailLink.replace(/=s\d+/, '=s160')
+                : `https://drive.google.com/thumbnail?id=${f.id}&sz=w160&key=${apiKey}`;
+            const pos = _infFotosSel.indexOf(f.id);
+            const sel = pos >= 0;
+            const tt  = (f.temaSecundario || f.name || '').replace(/"/g, '&quot;');
+            return `<div class="inf-foto${sel ? ' sel' : ''}" data-id="${f.id}" onclick="toggleInformeFoto('${f.id}')" title="${tt}">
+                <span class="inf-foto-badge">${sel ? pos + 1 : ''}</span>
+                <img src="${thumb}" loading="lazy">
+            </div>`;
+        }).join('');
+        actualizarContadorFotos();
+    }
+
+    function toggleInformeFoto(id) {
+        const pos = _infFotosSel.indexOf(id);
+        if (pos >= 0) {
+            _infFotosSel.splice(pos, 1);
+        } else {
+            if (_infFotosSel.length >= 3) {
+                setInfStatus('Máximo 3 fotos. Quita una para añadir otra.', 'err');
+                return;
+            }
+            _infFotosSel.push(id);
+            setInfStatus('', 'info');
+        }
+        renderInformeFotos();
+    }
+
+    function renderInformeVersiones(entrada) {
+        const cont = document.getElementById('infVersiones');
+        const vers = (entrada && Array.isArray(entrada.versiones)) ? entrada.versiones : [];
+        if (!vers.length) {
+            cont.innerHTML = '<span class="inf-ver-empty">Sin versiones guardadas todavía.</span>';
+            document.getElementById('infVerActual').textContent = '';
+            return;
+        }
+        cont.innerHTML = vers.map((v, i) => {
+            const f = v.ts
+                ? new Date(v.ts).toLocaleDateString('es', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+                : '';
+            const etq   = v.tipo === 'ia' ? 'IA' : 'Manual';
+            const iaCls = v.tipo === 'ia' ? ' ia' : '';
+            const act   = i === _infVerActivaIdx ? ' active' : '';
+            return `<button class="inf-ver-chip${iaCls}${act}" onclick="cargarVersionInforme(${i})" title="${f}">v${i + 1} · ${etq}</button>`;
+        }).join('');
+        const va = vers[_infVerActivaIdx];
+        document.getElementById('infVerActual').textContent =
+            va ? `viendo v${_infVerActivaIdx + 1} (${va.tipo === 'ia' ? 'IA' : 'manual'})` : '';
+    }
+
+    function cargarVersionInforme(i) {
+        const dia     = _informesCache[_infActual.fecha];
+        const entrada = dia && dia.entradas && dia.entradas[_infActual.key];
+        if (!entrada || !entrada.versiones || !entrada.versiones[i]) return;
+        document.getElementById('infTexto').value = entrada.versiones[i].texto || '';
+        _infVerActivaIdx = i;
+        renderInformeVersiones(entrada);
+    }
+
+    // Botón "Mejorar con IA" — pendiente de implementar.
+    // Cuando se conecte, debe: tomar el texto actual, generar una versión
+    // mejorada y agregarla como nueva versión { tipo:'ia', texto, ts } en
+    // entrada.versiones (igual que hace guardarInformeDia con las manuales).
+    function mejorarInformeIA() {
+        setInfStatus('La mejora con IA aún no está implementada (el botón ya está listo para conectarse).', 'info');
+    }
+
+    async function guardarInformeDia() {
+        if (!_infActual) return;
+        if (!MGMT_SCRIPT_URL) {
+            setInfStatus('⚠ Configura la URL del Script de Operaciones en Configuración.', 'err');
+            return;
+        }
+        const folderId = document.getElementById('folderId').value.trim();
+        if (!folderId) { setInfStatus('⚠ Falta el ID de carpeta de Drive.', 'err'); return; }
+
+        const texto   = document.getElementById('infTexto').value.trim();
+        const saveBtn = document.getElementById('infSaveBtn');
+        saveBtn.disabled = true;
+        setInfStatus('Guardando…', 'info');
+
+        // Construir / actualizar el objeto del día
+        let dia = _informesCache[_infActual.fecha];
+        if (!dia || typeof dia !== 'object') {
+            dia = { fecha: _infActual.fecha, proyecto: PROYECTO_PARAM || '', entradas: {} };
+        }
+        if (!dia.entradas) dia.entradas = {};
+
+        const key = _infActual.key;
+        let entrada = dia.entradas[key];
+        if (!entrada) {
+            entrada = { disciplina: _infActual.disc, tema: _infActual.tema, titulo: _infActual.titulo,
+                        fotos: [], versiones: [], activa: -1 };
+        }
+
+        // Versiones: agregar nueva versión manual sólo si el texto cambió
+        const vers        = Array.isArray(entrada.versiones) ? entrada.versiones : [];
+        const activaTexto = (_infVerActivaIdx >= 0 && vers[_infVerActivaIdx]) ? (vers[_infVerActivaIdx].texto || '') : '';
+        if (texto && (texto !== activaTexto || vers.length === 0)) {
+            vers.push({ tipo: 'manual', texto, ts: new Date().toISOString() });
+            entrada.activa = vers.length - 1;
+        } else {
+            entrada.activa = _infVerActivaIdx;
+        }
+        entrada.versiones  = vers;
+        entrada.fotos      = _infFotosSel.slice(0, 3);
+        entrada.disciplina = _infActual.disc;
+        entrada.tema       = _infActual.tema;
+        entrada.titulo     = _infActual.titulo;
+
+        dia.entradas[key] = entrada;
+        dia.actualizado   = new Date().toISOString();
+
+        // Guardar en Drive vía Apps Script (POST no-cors → respuesta opaca → optimista)
+        try {
+            await fetch(MGMT_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ action: 'saveinforme', folderId, fecha: _infActual.fecha, contenido: dia })
+            });
+            _informesCache[_infActual.fecha] = dia;
+            _infVerActivaIdx = entrada.activa;
+            renderInformeVersiones(entrada);
+            marcarChipsConInforme();
+            setInfStatus('✓ Informe guardado.', 'ok');
+        } catch (err) {
+            setInfStatus('Error al guardar: ' + err.message, 'err');
+        } finally {
+            saveBtn.disabled = false;
+        }
+    }
+
+    // Precarga todos los informes (informe_*.json) de la carpeta para marcar,
+    // al abrir la página, los temas que ya tienen comentarios o fotos guardadas.
+    async function precargarInformes() {
+        const apiKey   = localStorage.getItem('viewer_api_key');
+        const folderId = document.getElementById('folderId').value.trim();
+        if (!apiKey || !folderId) return;
+        try {
+            // 1) Lista los archivos informe_*.json de la carpeta
+            const archivos = [];
+            let pageToken = '';
+            do {
+                const params = new URLSearchParams({
+                    q: `name contains 'informe_' and '${folderId}' in parents and trashed = false`,
+                    fields: 'nextPageToken,files(id,name)',
+                    pageSize: 1000,
+                    key: apiKey,
+                    ...(pageToken ? { pageToken } : {})
+                });
+                const res  = await fetch(`https://www.googleapis.com/drive/v3/files?${params}`);
+                const data = await res.json();
+                if (data.error) throw new Error(data.error.message);
+                (data.files || []).forEach(f => {
+                    const m = /^informe_(\d{8})\.json$/.exec(f.name);
+                    if (m) archivos.push({ id: f.id, fecha: m[1] });
+                });
+                pageToken = data.nextPageToken || '';
+            } while (pageToken);
+
+            // 2) Descarga el contenido de los que aún no estén en caché
+            await Promise.all(archivos.map(async a => {
+                if (_informesCache[a.fecha]) return;   // ya cargado con contenido
+                try {
+                    const r   = await fetch(`https://www.googleapis.com/drive/v3/files/${a.id}?alt=media&key=${apiKey}`);
+                    const obj = await r.json();
+                    obj._fileId = a.id;
+                    _informesCache[a.fecha] = obj;
+                } catch (_) { /* ignora archivos ilegibles */ }
+            }));
+
+            // 3) Refresca los indicadores en la línea de tiempo
+            marcarChipsConInforme();
+        } catch (err) {
+            console.warn('No se pudieron precargar los informes', err);
+        }
+    }
+
+    // Marca con un punto los chips de días que ya tienen informe cargado en caché
+    function marcarChipsConInforme() {        document.querySelectorAll('.tl-chip').forEach(ch => {
+            const fecha = ch.dataset.fecha;
+            const dia   = fecha ? _informesCache[fecha] : null;
+            let on = false;
+            if (dia && dia.entradas) {
+                const e = dia.entradas[_infKey(ch.dataset.disc, ch.dataset.tema, ch.dataset.titulo)];
+                on = !!(e && ((e.versiones && e.versiones.length) || (e.fotos && e.fotos.length)));
+            }
+            ch.classList.toggle('has-informe', on);
+        });
+    }
+
+    // Cierre del modal con clic en el fondo o tecla Escape
+    document.getElementById('informeModal').addEventListener('click', function (e) {
+        if (e.target === this) cerrarInforme();
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && document.getElementById('informeModal').classList.contains('open')) cerrarInforme();
+    });
 </script>
 </body>
 </html>
