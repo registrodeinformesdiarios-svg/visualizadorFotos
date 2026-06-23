@@ -622,6 +622,134 @@
             letter-spacing: .03em;
         }
 
+        /* ── PENDIENTES DE CLASIFICAR (buffer) ── */
+        .pending-section {
+            display: none;
+            padding: 14px 24px 18px;
+            background: rgba(56,189,248,0.05);
+            border-bottom: 1px solid rgba(56,189,248,0.16);
+        }
+        .pending-section.visible { display: block; }
+        .pending-head {
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+        .pending-title {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; font-weight: 700; color: #38bdf8;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .pending-count {
+            font-family: 'DM Mono', monospace; font-weight: 700;
+            background: rgba(56,189,248,0.16); color: #38bdf8;
+            border-radius: 999px; padding: 1px 9px; font-size: 11px;
+        }
+        .pending-actions { display: flex; gap: 7px; flex-wrap: wrap; margin-left: auto; }
+        .pending-btn {
+            padding: 5px 12px;
+            border: 1px solid rgba(56,189,248,0.4);
+            border-radius: 8px;
+            background: rgba(56,189,248,0.1);
+            color: #38bdf8;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px; font-weight: 700;
+            cursor: pointer; transition: all .15s;
+        }
+        .pending-btn:hover { background: rgba(56,189,248,0.2); }
+        .pending-btn.primary {
+            background: #38bdf8; color: #04212e; border-color: #38bdf8;
+        }
+        .pending-btn.primary:hover { opacity: .9; }
+        .pending-btn:disabled {
+            opacity: .4; cursor: not-allowed;
+            background: rgba(56,189,248,0.06);
+        }
+        .pending-hint {
+            font-size: 11px; color: var(--text-muted);
+            margin: 9px 0 12px; line-height: 1.5; max-width: 760px;
+        }
+        .pending-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+            gap: 10px;
+        }
+        .pending-card {
+            position: relative;
+            aspect-ratio: 1/1;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid var(--border);
+            background: var(--bg);
+            transition: border-color .15s, transform .1s;
+        }
+        .pending-card:hover { border-color: rgba(56,189,248,0.55); }
+        .pending-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .pending-card.selected { border-color: #38bdf8; }
+        .pending-card.selected::after {
+            content: '✓';
+            position: absolute; top: 6px; left: 6px;
+            width: 20px; height: 20px;
+            display: flex; align-items: center; justify-content: center;
+            background: #38bdf8; color: #04212e;
+            border-radius: 50%; font-size: 12px; font-weight: 800;
+            box-shadow: 0 1px 4px rgba(0,0,0,.4);
+        }
+        .pending-card .pp-zoom {
+            position: absolute; top: 6px; right: 6px;
+            width: 22px; height: 22px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,.55); color: #fff;
+            border: none; border-radius: 6px; cursor: pointer;
+            opacity: 0; transition: opacity .15s; z-index: 5;
+        }
+        .pending-card:hover .pp-zoom { opacity: 1; }
+        .pending-card .pp-zoom:hover { background: rgba(56,189,248,.9); color: #04212e; }
+        .pending-card .pp-fecha {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            font-size: 9.5px; font-family: 'DM Mono', monospace;
+            color: #fff; background: linear-gradient(transparent, rgba(0,0,0,.75));
+            padding: 12px 6px 5px; text-align: center; pointer-events: none;
+        }
+
+        /* Bulk retag modal (reusa estilos de .retag-box) */
+        #bulkRetagModal {
+            display: none;
+            position: fixed; inset: 0; z-index: 400;
+            background: rgba(5,7,12,.82);
+            backdrop-filter: blur(10px);
+            align-items: center; justify-content: center;
+        }
+        #bulkRetagModal.open { display: flex; animation: lbIn .15s ease; }
+
+        /* Vista rápida de una pendiente */
+        #pendingPreview {
+            display: none;
+            position: fixed; inset: 0; z-index: 420;
+            background: rgba(5,7,12,.9);
+            align-items: center; justify-content: center;
+            padding: 24px;
+        }
+        #pendingPreview.open { display: flex; animation: lbIn .15s ease; }
+        #pendingPreview .pp-inner {
+            position: relative; max-width: 92vw; max-height: 92vh;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        #pendingPreview img {
+            max-width: 92vw; max-height: 82vh; object-fit: contain;
+            border-radius: 10px; box-shadow: 0 30px 70px rgba(0,0,0,.6);
+        }
+        #pendingPreview .pp-name {
+            font-family: 'DM Mono', monospace; font-size: 11.5px;
+            color: var(--text-dim); text-align: center;
+            max-width: 92vw; word-break: break-all;
+        }
+        #pendingPreview .pp-close {
+            position: absolute; top: -10px; right: -10px;
+            width: 34px; height: 34px; border-radius: 50%;
+            background: var(--surface); border: 1px solid var(--border);
+            color: var(--text); font-size: 20px; cursor: pointer; z-index: 2;
+        }
+
         /* ── Estado de la marca de agua ── */
         .marca-chip {
             position: absolute;
@@ -1671,6 +1799,25 @@
     </table>
 </div>
 
+<!-- ══ PENDIENTES DE CLASIFICAR (buffer) ══ -->
+<div class="pending-section" id="pendingSection">
+    <div class="pending-head">
+        <div class="pending-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            Pendientes de clasificar
+            <span class="pending-count" id="pendingCount">0</span>
+        </div>
+        <div class="pending-actions">
+            <button class="pending-btn" id="pendingSelAll" onclick="seleccionarTodasPendientes()">Seleccionar todas</button>
+            <button class="pending-btn" id="pendingClear" onclick="limpiarSeleccionPendientes()">Quitar selección</button>
+            <button class="pending-btn primary" id="pendingClasificar" onclick="abrirBulkRetag()" disabled>Clasificar seleccionadas (0)</button>
+            <button class="pending-btn" id="pendingToggle" onclick="togglePendingPanel()">▾ Ocultar</button>
+        </div>
+    </div>
+    <p class="pending-hint">Marca las fotos que comparten la misma actividad y pulsa <strong>Clasificar seleccionadas</strong>. La clasificación se guarda en los metadatos (nombre + descripción) y la marca se aplicará automáticamente.</p>
+    <div class="pending-grid" id="pendingGrid"></div>
+</div>
+
 <!-- STATUS BAR -->
 <div class="status-bar" id="statusBar">
     <svg class="spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -1862,6 +2009,53 @@
             <button class="retag-save" onclick="guardarReclasificacion()">Guardar</button>
         </div>
         <div class="retag-status" id="retagStatus"></div>
+    </div>
+</div>
+
+<!-- BULK RETAG MODAL (clasificar varias pendientes a la vez) -->
+<div id="bulkRetagModal">
+    <div class="retag-box">
+        <div class="retag-title">
+            <span>Clasificar <span id="bulkRetagN">0</span> foto(s)</span>
+            <button class="settings-close" onclick="closeBulkRetag()">×</button>
+        </div>
+        <div class="retag-field">
+            <label class="field-label">Disciplina</label>
+            <select id="bulkDisciplina" class="field-input" onchange="onBulkDisciplinaChange()">
+                <option value="">— Seleccionar —</option>
+                <option value="civil">Civil</option>
+                <option value="em">Electromecánica</option>
+            </select>
+        </div>
+        <div class="retag-field">
+            <label class="field-label">Tema</label>
+            <select id="bulkTema" class="field-input" onchange="onBulkTemaChange()">
+                <option value="">— Elige disciplina —</option>
+            </select>
+        </div>
+        <div id="bulkNiveles"></div>
+        <div class="retag-field" id="bulkSugeridosField" style="display:none;">
+            <label class="field-label">Títulos del catálogo</label>
+            <div class="retag-sugeridos" id="bulkSugeridos"></div>
+        </div>
+        <div class="retag-field">
+            <label class="field-label">Título</label>
+            <input type="text" id="bulkTitulo" class="field-input" placeholder="Ej: Vista frontal…">
+        </div>
+        <div class="retag-actions">
+            <button class="retag-cancel" onclick="closeBulkRetag()">Cancelar</button>
+            <button class="retag-save" id="bulkSaveBtn" onclick="guardarBulkReclasificacion()">Clasificar</button>
+        </div>
+        <div class="retag-status" id="bulkStatus"></div>
+    </div>
+</div>
+
+<!-- PREVIEW PENDIENTE (vista rápida de una foto del buffer) -->
+<div id="pendingPreview" onclick="cerrarPreviewPendiente(event)">
+    <div class="pp-inner">
+        <button class="pp-close" onclick="cerrarPreviewPendiente()">×</button>
+        <img id="pendingPreviewImg" alt="">
+        <div class="pp-name" id="pendingPreviewName"></div>
     </div>
 </div>
 
@@ -2145,17 +2339,31 @@
         return 'ok';
     }
 
+    // ── Pendientes de clasificar (buffer) ──────────────────────────────────
+    // Una foto está "pendiente de clasificar" si el subidor la envió al buffer:
+    //  - bandera en metadatos (description JSON o XMP): pendiente === 'si'
+    //  - respaldo por nombre: sentinel sin clasificación entre paréntesis
+    function esPendiente(f) {
+        if (f && f.meta && f.meta.pendiente === 'si') return true;
+        if (f && !f.temaPrincipal && /pendiente de clasificar/i.test(f.temaSecundario || '')) return true;
+        return false;
+    }
+
     // Annotate all files with their classification status
     function annotateAllFiles() {
         if (Object.keys(catalogIndex).length === 0) return;
-        allFiles.forEach(f => { f._classification = classifyFile(f); });
+        allFiles.forEach(f => {
+            // Los pendientes no se evalúan contra el catálogo: tienen su propio panel
+            f._classification = esPendiente(f) ? 'pendiente' : classifyFile(f);
+        });
     }
 
     // ── Unclassified panel ────────────────────────────────────────────────────
     function updateUnclassifiedPanel() {
         if (Object.keys(catalogIndex).length === 0) return;
         annotateAllFiles();
-        const unclassified = allFiles.filter(f => f._classification !== 'ok');
+        // Los pendientes tienen su propio panel; no cuentan como "mal clasificados"
+        const unclassified = allFiles.filter(f => f._classification !== 'ok' && f._classification !== 'pendiente');
         const bar = document.getElementById('unclassifiedBar');
         if (unclassified.length > 0) {
             document.getElementById('unclassifiedCount').textContent = unclassified.length;
@@ -2164,6 +2372,7 @@
         } else {
             bar.classList.remove('visible');
         }
+        updatePendingPanel();
         applyFilters(); // re-render grid with classification badges
     }
 
@@ -2211,6 +2420,270 @@
         }
         const idx = filtered.findIndex(f => f.id === fileId);
         if (idx >= 0) openLightbox(idx);
+    }
+
+    // ══ PENDIENTES DE CLASIFICAR (buffer) ══════════════════════════════════
+    let pendingSel = new Set();        // ids de pendientes seleccionadas
+    let pendingCollapsed = false;
+
+    function pendingFiles() {
+        return allFiles.filter(esPendiente);
+    }
+
+    function updatePendingPanel() {
+        const sec  = document.getElementById('pendingSection');
+        const list = pendingFiles();
+        // Descartar de la selección los ids que ya no son pendientes
+        Array.from(pendingSel).forEach(id => { if (!list.some(f => f.id === id)) pendingSel.delete(id); });
+        if (!list.length) {
+            sec.classList.remove('visible');
+            actualizarBotonClasificar();
+            return;
+        }
+        sec.classList.add('visible');
+        document.getElementById('pendingCount').textContent = list.length;
+        renderPendingGrid(list);
+        actualizarBotonClasificar();
+    }
+
+    const _imgFallback = "this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%231e2436%22 width=%22100%22 height=%22100%22/><text y=%2255%22 x=%2250%22 text-anchor=%22middle%22 font-size=%2228%22>📷</text></svg>'";
+
+    function renderPendingGrid(list) {
+        const grid = document.getElementById('pendingGrid');
+        if (pendingCollapsed) { grid.style.display = 'none'; return; }
+        grid.style.display = '';
+        const apiKey = localStorage.getItem('viewer_api_key');
+        const ordered = list.slice().sort((a, b) =>
+            (b.fecha || '').localeCompare(a.fecha || '') || (a.name || '').localeCompare(b.name || ''));
+        grid.innerHTML = ordered.map(f => {
+            const thumb = f.thumbnailLink
+                ? f.thumbnailLink.replace(/=s\d+/, '=s320')
+                : `https://drive.google.com/thumbnail?id=${f.id}&sz=w320&key=${apiKey}`;
+            const sel = pendingSel.has(f.id) ? ' selected' : '';
+            const fechaTxt = formatFecha(f.fecha) || '';
+            return `<div class="pending-card${sel}" data-id="${f.id}" onclick="togglePendingSelect('${f.id}')" title="${f.name}">
+                <img src="${thumb}" loading="lazy" onerror="${_imgFallback}">
+                <button class="pp-zoom" title="Ver foto" onclick="event.stopPropagation();abrirPreviewPendiente('${f.id}')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                </button>
+                ${fechaTxt ? `<div class="pp-fecha">${fechaTxt}</div>` : ''}
+            </div>`;
+        }).join('');
+    }
+
+    function togglePendingSelect(id) {
+        if (pendingSel.has(id)) pendingSel.delete(id); else pendingSel.add(id);
+        const card = document.querySelector(`.pending-card[data-id="${id}"]`);
+        if (card) card.classList.toggle('selected', pendingSel.has(id));
+        actualizarBotonClasificar();
+    }
+
+    function seleccionarTodasPendientes() {
+        pendingFiles().forEach(f => pendingSel.add(f.id));
+        renderPendingGrid(pendingFiles());
+        actualizarBotonClasificar();
+    }
+
+    function limpiarSeleccionPendientes() {
+        pendingSel.clear();
+        document.querySelectorAll('.pending-card.selected').forEach(c => c.classList.remove('selected'));
+        actualizarBotonClasificar();
+    }
+
+    function actualizarBotonClasificar() {
+        const n = pendingSel.size;
+        const btn = document.getElementById('pendingClasificar');
+        if (!btn) return;
+        btn.textContent = `Clasificar seleccionadas (${n})`;
+        btn.disabled = n === 0;
+    }
+
+    function togglePendingPanel() {
+        pendingCollapsed = !pendingCollapsed;
+        document.getElementById('pendingToggle').textContent = pendingCollapsed ? '▸ Mostrar' : '▾ Ocultar';
+        renderPendingGrid(pendingFiles());
+    }
+
+    // ── Vista rápida de una pendiente ──
+    function abrirPreviewPendiente(id) {
+        const f = allFiles.find(x => x.id === id);
+        if (!f) return;
+        const apiKey = localStorage.getItem('viewer_api_key');
+        const img = document.getElementById('pendingPreviewImg');
+        img.src = f.thumbnailLink
+            ? f.thumbnailLink.replace(/=s\d+/, '=s1600')
+            : `https://drive.google.com/thumbnail?id=${f.id}&sz=w1600&key=${apiKey}`;
+        document.getElementById('pendingPreviewName').textContent = f.name || '';
+        document.getElementById('pendingPreview').classList.add('open');
+    }
+    function cerrarPreviewPendiente(e) {
+        if (e && e.target && e.target.id !== 'pendingPreview' && !e.target.classList.contains('pp-close')) return;
+        document.getElementById('pendingPreview').classList.remove('open');
+        document.getElementById('pendingPreviewImg').src = '';
+    }
+
+    // ── Modal de clasificación múltiple ──
+    function abrirBulkRetag() {
+        if (pendingSel.size === 0) return;
+        document.getElementById('bulkRetagN').textContent = pendingSel.size;
+        document.getElementById('bulkDisciplina').value = '';
+        document.getElementById('bulkTema').innerHTML = '<option value="">— Elige disciplina —</option>';
+        document.getElementById('bulkNiveles').innerHTML = '';
+        document.getElementById('bulkSugeridos').innerHTML = '';
+        document.getElementById('bulkSugeridosField').style.display = 'none';
+        document.getElementById('bulkTitulo').value = '';
+        const s = document.getElementById('bulkStatus');
+        s.className = 'retag-status'; s.textContent = '';
+        document.getElementById('bulkRetagModal').classList.add('open');
+    }
+    function closeBulkRetag() {
+        document.getElementById('bulkRetagModal').classList.remove('open');
+    }
+    async function onBulkDisciplinaChange() {
+        const disc = document.getElementById('bulkDisciplina').value;
+        const temaSel = document.getElementById('bulkTema');
+        temaSel.innerHTML = '<option value="">— Seleccionar —</option>';
+        document.getElementById('bulkNiveles').innerHTML = '';
+        document.getElementById('bulkSugeridos').innerHTML = '';
+        document.getElementById('bulkSugeridosField').style.display = 'none';
+        if (!disc) return;
+        const topics = await loadTopics(disc);
+        topics.forEach(t => {
+            const o = document.createElement('option');
+            o.value = t.label; o.textContent = t.label;
+            temaSel.appendChild(o);
+        });
+    }
+    async function onBulkTemaChange() {
+        const disc = document.getElementById('bulkDisciplina').value;
+        const main = document.getElementById('bulkTema').value;
+        document.getElementById('bulkNiveles').innerHTML = '';
+        document.getElementById('bulkSugeridos').innerHTML = '';
+        document.getElementById('bulkSugeridosField').style.display = 'none';
+        if (!disc || !main) return;
+        const topics = await loadTopics(disc);
+        const found  = topics.find(t => t.label === main);
+        if (found) {
+            populateRetagNiveles(found, [], 'bulkNiveles');
+            populateRetagSugeridos(found, '', {
+                fieldId: 'bulkSugeridosField', containerId: 'bulkSugeridos', tituloInputId: 'bulkTitulo'
+            });
+        }
+    }
+
+    // Próximo correlativo para una clasificación dada (evita pisar archivos)
+    function _nextSeqStart(fecha, titulo, partesTema) {
+        const baseName = partesTema
+            ? `${fecha}_${titulo} (${partesTema})`
+            : `${fecha}_${titulo}`;
+        let max = 0;
+        allFiles.forEach(f => {
+            const noExt = (f.name || '').replace(/\.[^.]+$/, '');
+            const m = noExt.match(/_(\d+)$/);
+            if (!m) return;
+            const base = noExt.slice(0, noExt.length - m[0].length);
+            if (base === baseName) max = Math.max(max, parseInt(m[1], 10));
+        });
+        return max + 1;
+    }
+
+    async function guardarBulkReclasificacion() {
+        const statusEl = document.getElementById('bulkStatus');
+        if (!MGMT_SCRIPT_URL) {
+            statusEl.className = 'retag-status err';
+            statusEl.textContent = 'Configura la URL del Script de Operaciones en Configuración';
+            return;
+        }
+        const titulo = document.getElementById('bulkTitulo').value.trim();
+        const tema   = document.getElementById('bulkTema').value.trim();
+        const disc   = document.getElementById('bulkDisciplina').value;
+        if (!titulo) { statusEl.className = 'retag-status err'; statusEl.textContent = 'El título es obligatorio'; return; }
+        if (!tema)   { statusEl.className = 'retag-status err'; statusEl.textContent = 'Selecciona un tema'; return; }
+
+        const niveles = Array.from(document.querySelectorAll('#bulkNiveles select'))
+                            .map(s => s.value.trim()).filter(Boolean);
+        const partesTema   = [tema, ...niveles].join('-');
+        const clasifLegible = [tema, ...niveles].join(' / ');
+        const especialidad = disc === 'em' ? 'Electromecánico' : (disc === 'civil' ? 'Civil' : '');
+
+        const sel = pendingFiles().filter(f => pendingSel.has(f.id));
+        if (!sel.length) { closeBulkRetag(); return; }
+
+        const saveBtn = document.getElementById('bulkSaveBtn');
+        saveBtn.disabled = true;
+        statusEl.className = 'retag-status';
+
+        const seqByClave = {};
+        let ok = 0, err = 0;
+
+        for (let i = 0; i < sel.length; i++) {
+            const f = sel[i];
+            statusEl.textContent = `Clasificando ${i + 1}/${sel.length}…`;
+
+            const extMatch = (f.name || '').match(/\.([^.]+)$/);
+            const ext   = extMatch ? extMatch[1] : 'jpg';
+            const fecha = f.fecha || '';
+
+            const clave = `${fecha}__${partesTema}__${titulo}`;
+            if (seqByClave[clave] == null) seqByClave[clave] = _nextSeqStart(fecha, titulo, partesTema) - 1;
+            const seq = (seqByClave[clave] += 1);
+
+            const newName = fecha
+                ? `${fecha}_${titulo} (${partesTema})_${seq}.${ext}`
+                : `${titulo} (${partesTema})_${seq}.${ext}`;
+
+            // Metadatos ya clasificados: con marca y SIN bandera de pendiente
+            const nuevoMeta = {
+                ...(f.meta || {}),
+                original: 'si', marca: 'si',
+                tema, especialidad, titulo,
+                clasificacion: clasifLegible
+            };
+            delete nuevoMeta.pendiente;
+            const desc = JSON.stringify(nuevoMeta);
+
+            try {
+                // 1) Guardar metadatos en la descripción de Drive
+                const u1 = `${MGMT_SCRIPT_URL}?action=setdesc&fileId=${encodeURIComponent(f.id)}&desc=${encodeURIComponent(desc)}&t=${Date.now()}`;
+                const r1 = await fetch(u1, { redirect: 'follow' });
+                const d1 = await r1.json();
+                if (!d1.ok) throw new Error(d1.error || 'setdesc no disponible');
+
+                // 2) Renombrar el archivo con la clasificación
+                const u2 = `${MGMT_SCRIPT_URL}?action=rename&fileId=${encodeURIComponent(f.id)}&newName=${encodeURIComponent(newName)}&t=${Date.now()}`;
+                const r2 = await fetch(u2, { redirect: 'follow' });
+                const d2 = await r2.json();
+                if (!d2.ok) throw new Error(d2.error || 'rename no disponible');
+
+                // Estado local
+                const parsed = parseFilename(newName);
+                const update = { name: newName, ...parsed, meta: nuevoMeta, marcaEstado: 'con_marca', description: desc };
+                const inAll = allFiles.find(x => x.id === f.id);
+                if (inAll) { invalidarMarcaCache(inAll); Object.assign(inAll, update); inAll._xmpChecked = true; }
+                pendingSel.delete(f.id);
+                ok++;
+            } catch (e) {
+                err++;
+            }
+            await new Promise(r => setTimeout(r, 0));
+        }
+
+        // Refrescar todo (garantizado, con o sin catálogo cargado)
+        annotateAllFiles();
+        updateUnclassifiedPanel();
+        updatePendingPanel();
+        applyFilters();
+        buildTimeline();
+
+        saveBtn.disabled = false;
+        if (err === 0) {
+            statusEl.className = 'retag-status ok';
+            statusEl.textContent = `✓ ${ok} foto${ok !== 1 ? 's' : ''} clasificada${ok !== 1 ? 's' : ''}`;
+            setTimeout(() => closeBulkRetag(), 1300);
+        } else {
+            statusEl.className = 'retag-status err';
+            statusEl.textContent = `${ok} clasificadas, ${err} con error`;
+        }
     }
 
     // ── Settings ───────────────────────────────────────────────────────────
@@ -2464,6 +2937,7 @@
             annotateAllFiles();
             applyFilters();
             updateUnclassifiedPanel();
+            updatePendingPanel();   // panel "Pendientes de clasificar" (no requiere catálogo)
             buildTimeline({ scrollEnd: true });
             precargarInformes();   // marca los temas que ya tienen comentarios
         } catch(err) {
@@ -2503,6 +2977,7 @@
         const tituloFiltro = tituloSelEl ? tituloSelEl.value.trim().toLowerCase() : '';
 
         filtered = allFiles.filter(f => {
+            if (esPendiente(f)) return false; // los pendientes viven en su propio panel
             if (showOnlyUnclassified && f._classification === 'ok') return false;
 
             // temaPrincipal in filename = "tema-opcion1-opcion2-..." (dash-separated)
@@ -3248,7 +3723,8 @@
                 especialidad: get('especialidad'),
                 clasificacion: get('clasificacion'),
                 marca: get('marca') || 'si',
-                original: get('original')
+                original: get('original'),
+                pendiente: get('pendiente')
             };
             if (meta.original !== 'si') return false;
 
@@ -3285,6 +3761,11 @@
     // Retag modal outside click
     document.getElementById('retagModal').addEventListener('click', function(e) {
         if (e.target === this) closeRetag();
+    });
+
+    // Bulk retag modal outside click
+    document.getElementById('bulkRetagModal').addEventListener('click', function(e) {
+        if (e.target === this) closeBulkRetag();
     });
 
     // ── Lightbox action helpers ──────────────────────────────────────────────
@@ -3633,8 +4114,8 @@
         document.getElementById('retagModal').classList.add('open');
     }
 
-    function populateRetagNiveles(topicEntry, partsP) {
-        const container = document.getElementById('retagNiveles');
+    function populateRetagNiveles(topicEntry, partsP, containerId = 'retagNiveles') {
+        const container = document.getElementById(containerId);
         container.innerHTML = '';
         if (!topicEntry.optionsByLevel) return;
         Object.keys(topicEntry.optionsByLevel).sort().forEach((lvl, i) => {
@@ -3661,9 +4142,12 @@
         });
     }
 
-    function populateRetagSugeridos(topicEntry, currentTitulo) {
-        const field     = document.getElementById('retagSugeridosField');
-        const container = document.getElementById('retagSugeridos');
+    function populateRetagSugeridos(topicEntry, currentTitulo, opts = {}) {
+        const fieldId       = opts.fieldId       || 'retagSugeridosField';
+        const containerId   = opts.containerId   || 'retagSugeridos';
+        const tituloInputId = opts.tituloInputId || 'retagTitulo';
+        const field     = document.getElementById(fieldId);
+        const container = document.getElementById(containerId);
 
         // parseTopicsTxt mixes plain titles and option values in subs[].
         // Recover plain titles by subtracting all optionsByLevel values.
@@ -3686,7 +4170,7 @@
             chip.textContent = t;
             if (curLow && t.toLowerCase() === curLow) chip.classList.add('active');
             chip.onclick = () => {
-                document.getElementById('retagTitulo').value = t;
+                document.getElementById(tituloInputId).value = t;
                 container.querySelectorAll('.retag-sugerido-chip')
                     .forEach(c => c.classList.remove('active'));
                 chip.classList.add('active');
