@@ -129,7 +129,15 @@
         }
         .field-input::placeholder { color: var(--text-muted); }
 
-        select.field-input { cursor: pointer; }
+        select.field-input { cursor: pointer; appearance: none; -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
+        /* Opciones legibles: fondo oscuro + texto claro (evita blanco sobre blanco) */
+        .field-input option,
+        select.field-input option,
+        select.field-input optgroup {
+            background: #1e2436; color: #e2e8f0;
+        }
 
         .folder-input { min-width: 220px; font-size: 11px; }
 
@@ -720,6 +728,17 @@
             align-items: center; justify-content: center;
         }
         #bulkRetagModal.open { display: flex; animation: lbIn .15s ease; }
+
+        /* Modal de configuración de depósito (por encima del dock de lote) */
+        #bktConfigModal {
+            display: none;
+            position: fixed; inset: 0; z-index: 500;
+            background: rgba(5,7,12,.82);
+            backdrop-filter: blur(10px);
+            align-items: center; justify-content: center;
+            padding: 16px;
+        }
+        #bktConfigModal.open { display: flex; animation: lbIn .15s ease; }
 
         /* Vista rápida de una pendiente */
         #pendingPreview {
@@ -1714,6 +1733,226 @@
             .tl-grid { grid-auto-columns: minmax(118px, 1fr); }
             .timeline.mode-general .tl-gantt { --tl-day: 20px; --tl-lbl: 130px; }
         }
+
+        /* ══ DEPÓSITOS DE RECLASIFICACIÓN POR LOTE ══════════════════════════ */
+        .batch-fab {
+            position: fixed; right: 18px; bottom: 18px; z-index: 60;
+            display: flex; align-items: center; gap: 8px;
+            padding: 11px 15px; border-radius: 30px; cursor: pointer;
+            background: var(--accent); color: #fff; border: none;
+            font: 600 13px/1 inherit; letter-spacing: .2px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.4);
+            transition: transform .12s, box-shadow .12s, background .12s;
+        }
+        .batch-fab:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,.5); }
+        .batch-fab.active { background: #1d4ed8; }
+        /* Con el dock abierto, ocultar el botón flotante (se cierra con la × del encabezado) */
+        body.batch-on .batch-fab { display: none; }
+        .batch-fab .fab-badge {
+            min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+            background: rgba(255,255,255,.25); font-size: 11px; font-weight: 700;
+            display: none; align-items: center; justify-content: center;
+        }
+        .batch-fab .fab-badge.show { display: inline-flex; }
+
+        .batch-dock {
+            position: fixed; top: 0; right: 0; bottom: 0; width: 340px; max-width: 88vw;
+            z-index: 55; background: var(--surface);
+            border-left: 1px solid var(--border);
+            box-shadow: -12px 0 40px rgba(0,0,0,.45);
+            display: flex; flex-direction: column;
+            transform: translateX(105%); transition: transform .22s ease;
+        }
+        .batch-dock.open { transform: translateX(0); }
+        .dock-head {
+            padding: 15px 16px 12px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 9px;
+        }
+        .dock-head h3 { font-size: 14px; font-weight: 600; flex: 1; }
+        .dock-head .dock-x {
+            width: 26px; height: 26px; border-radius: 7px; border: 1px solid var(--border);
+            background: transparent; color: var(--text-dim); cursor: pointer; font-size: 15px;
+        }
+        .dock-head .dock-x:hover { background: var(--border-hover); color: var(--text); }
+        .dock-hint {
+            padding: 9px 16px; font-size: 11px; color: var(--text-muted);
+            border-bottom: 1px solid var(--border); line-height: 1.5;
+        }
+        .dock-hint strong { color: var(--text-dim); }
+        .dock-buckets { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 11px; }
+
+        .bkt {
+            border: 1px solid var(--border); border-radius: 11px; background: var(--surface2);
+            overflow: hidden; transition: border-color .12s, box-shadow .12s;
+        }
+        .bkt.drop { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,130,246,.25) inset; }
+        .bkt.armed { border-color: #38bdf8; box-shadow: 0 0 0 1px rgba(56,189,248,.4); }
+        .bkt-head {
+            display: flex; align-items: center; gap: 7px;
+            padding: 9px 10px; cursor: default;
+        }
+        .bkt-name { font-size: 12.5px; font-weight: 600; color: var(--text); }
+        .bkt-count {
+            min-width: 20px; height: 18px; padding: 0 5px; border-radius: 9px;
+            background: var(--accent); color: #fff; font-size: 11px; font-weight: 700;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .bkt-count.zero { background: rgba(255,255,255,.08); color: var(--text-muted); }
+        .bkt-head .spacer { flex: 1; }
+        .bkt-ico {
+            width: 24px; height: 24px; border-radius: 6px; cursor: pointer;
+            border: 1px solid var(--border); background: transparent; color: var(--text-dim);
+            font-size: 12px; display: inline-flex; align-items: center; justify-content: center;
+            transition: background .12s, color .12s, border-color .12s;
+        }
+        .bkt-ico:hover { background: var(--border-hover); color: var(--text); }
+        .bkt-ico.on { background: rgba(56,189,248,.18); color: #38bdf8; border-color: rgba(56,189,248,.5); }
+
+        .bkt-target {
+            padding: 6px 10px 8px; font-size: 11px; color: var(--text-dim); line-height: 1.45;
+            cursor: pointer; border-radius: 7px; transition: background .12s;
+        }
+        .bkt-target:hover { background: rgba(255,255,255,0.04); }
+        .bkt-target .tg-empty { color: var(--text-muted); font-style: italic; }
+        .bkt-target .tg-clasif { color: #7dd3fc; }
+        .bkt-target .tg-fecha  { color: var(--green); }
+
+        .bkt-config { display: none; padding: 4px 10px 11px; border-top: 1px dashed var(--border); }
+        .bkt-config.open { display: block; }
+        .bkt-config .retag-field { margin-bottom: 9px; }
+        .bkt-config .field-label { margin-bottom: 4px; display: block; font-size: 10px; }
+        .bkt-config .field-input { width: 100%; font-size: 12px; padding: 6px 8px; }
+        .bkt-config .retag-sugeridos { display: flex; flex-wrap: wrap; gap: 5px; }
+
+        .bkt-items {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;
+            padding: 0 10px 10px;
+        }
+        .bkt-items:empty { display: none; }
+        .bkt-thumb {
+            position: relative; aspect-ratio: 1; border-radius: 6px; overflow: hidden;
+            border: 1px solid var(--border); background: var(--bg);
+        }
+        .bkt-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .bkt-thumb .rm {
+            position: absolute; top: 2px; right: 2px; width: 16px; height: 16px;
+            border-radius: 50%; border: none; cursor: pointer; font-size: 11px; line-height: 1;
+            background: rgba(0,0,0,.6); color: #fff; display: flex; align-items: center; justify-content: center;
+        }
+        .bkt-thumb .rm:hover { background: #ef4444; }
+
+        .dock-foot { padding: 12px 14px; border-top: 1px solid var(--border); }
+        .dock-apply {
+            width: 100%; padding: 11px; border-radius: 9px; border: none; cursor: pointer;
+            background: var(--green); color: #04240f; font-weight: 700; font-size: 13px;
+            transition: opacity .12s;
+        }
+        .dock-apply:hover { opacity: .92; }
+        .dock-apply:disabled { background: rgba(255,255,255,.08); color: var(--text-muted); cursor: not-allowed; }
+        .dock-status { margin-top: 9px; font-size: 12px; text-align: center; min-height: 16px; }
+        .dock-status.ok  { color: var(--green); }
+        .dock-status.err { color: #f87171; }
+        .dock-status.run { color: var(--text-dim); }
+
+        /* La foto se puede arrastrar cuando el dock está abierto */
+        body.batch-on .photo-card,
+        body.batch-on .pending-card { cursor: grab; }
+        body.batch-arm .photo-card,
+        body.batch-arm .pending-card { cursor: copy; }
+        .photo-card.bkt-dragging, .pending-card.bkt-dragging { opacity: .45; }
+
+
+        /* ══ DETECCIÓN DE FOTOS REPETIDAS (hash perceptual) ═════════════════ */
+        .dup-launch {
+            background: transparent !important;
+            border: 1px solid rgba(56,189,248,0.5) !important;
+            color: #7dd3fc !important;
+        }
+        .dup-launch:hover { background: rgba(56,189,248,0.14) !important; }
+
+        .dup-section {
+            display: none; margin: 0 22px 14px;
+            border: 1px solid rgba(56,189,248,0.28); border-radius: 12px;
+            background: linear-gradient(180deg, rgba(56,189,248,0.05), transparent 60%);
+            padding: 14px 16px;
+        }
+        .dup-section.visible { display: block; }
+        .dup-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .dup-title {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; font-weight: 600; color: var(--text);
+        }
+        .dup-title svg { color: #38bdf8; }
+        .dup-count {
+            min-width: 20px; height: 19px; padding: 0 6px; border-radius: 10px;
+            background: #38bdf8; color: #04212e; font-size: 11px; font-weight: 700;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .dup-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+        .dup-sens {
+            display: flex; align-items: center; gap: 7px;
+            font-size: 11px; color: var(--text-muted);
+        }
+        .dup-sens input[type=range] { width: 96px; accent-color: #38bdf8; }
+        .dup-sens #dupThreshVal { color: var(--text-dim); font-weight: 600; min-width: 14px; text-align: center; }
+        .dup-hint { font-size: 11px; color: var(--text-muted); margin: 8px 0 4px; line-height: 1.5; }
+        .dup-hint strong { color: var(--text-dim); }
+        .dup-progress { font-size: 12px; color: var(--text-dim); min-height: 15px; margin-bottom: 6px; }
+
+        .dup-groups { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
+        .dup-group {
+            border: 1px solid var(--border); border-radius: 10px;
+            background: var(--surface2); overflow: hidden;
+        }
+        .dg-head {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 9px 12px; border-bottom: 1px solid var(--border);
+        }
+        .dg-title { font-size: 12px; font-weight: 600; color: var(--text); }
+        .dg-title .n { color: var(--text-muted); font-weight: 500; }
+        .dg-purge {
+            margin-left: auto; padding: 5px 10px; border-radius: 7px; cursor: pointer;
+            font-size: 11px; font-weight: 600;
+            background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.4);
+        }
+        .dg-purge:hover { background: rgba(239,68,68,0.22); }
+        .dg-items {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px; padding: 12px;
+        }
+        .dg-card {
+            border: 1px solid var(--border); border-radius: 9px; overflow: hidden;
+            background: var(--bg); display: flex; flex-direction: column;
+        }
+        .dg-card.rep { border-color: rgba(34,197,94,0.5); }
+        .dg-thumb { position: relative; aspect-ratio: 4/3; background: #0b0e15; }
+        .dg-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: zoom-in; }
+        .dg-badge {
+            position: absolute; top: 6px; left: 6px; padding: 2px 7px; border-radius: 20px;
+            font-size: 10px; font-weight: 700;
+        }
+        .dg-badge.rep  { background: rgba(34,197,94,0.9);  color: #04240f; }
+        .dg-badge.dist { background: rgba(0,0,0,0.65); color: #e2e8f0; right: 6px; left: auto; }
+        .dg-meta { padding: 7px 9px; }
+        .dg-name {
+            font-size: 10.5px; font-family: 'DM Mono', monospace; color: var(--text-dim);
+            word-break: break-all; line-height: 1.4; max-height: 44px; overflow: hidden;
+        }
+        .dg-sub { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+        .dg-actions { display: flex; gap: 6px; padding: 0 9px 9px; }
+        .dg-btn {
+            flex: 1; padding: 5px; border-radius: 6px; cursor: pointer; font-size: 11px;
+            border: 1px solid var(--border); background: transparent; color: var(--text-dim);
+        }
+        .dg-btn:hover { background: var(--border-hover); color: var(--text); }
+        .dg-btn.del { border-color: rgba(239,68,68,0.4); color: #fca5a5; }
+        .dg-btn.del:hover { background: rgba(239,68,68,0.18); }
+        .dup-empty { font-size: 12px; color: var(--text-muted); padding: 8px 2px; }
+
+        .dup-section.collapsed .dup-hint,
+        .dup-section.collapsed .dup-progress,
+        .dup-section.collapsed .dup-groups { display: none; }
+
     </style>
 </head>
 <body>
@@ -1776,6 +2015,7 @@
         <input type="date" id="fechaHasta" class="field-input" onchange="onFechaRangeChange()">
     </div>
     <button class="load-btn" id="loadBtn" onclick="loadFolder()">Cargar fotos</button>
+    <button class="load-btn dup-launch" id="dupLaunchBtn" onclick="analizarDuplicados()" title="Detectar fotos visualmente repetidas">Detectar repetidas</button>
 </div>
 
 <!-- UNCLASSIFIED BAR (visible after loading when catalog is available) -->
@@ -1817,6 +2057,37 @@
     <p class="pending-hint">Marca las fotos que comparten la misma actividad y pulsa <strong>Clasificar seleccionadas</strong>. La clasificación se guarda en los metadatos (nombre + descripción) y la marca se aplicará automáticamente.</p>
     <div class="pending-grid" id="pendingGrid"></div>
 </div>
+
+
+<!-- ══ FOTOS REPETIDAS (detección por hash perceptual) ════════════════════ -->
+<div class="dup-section" id="dupSection">
+    <div class="dup-head">
+        <div class="dup-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1">
+                <rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/></svg>
+            Fotos repetidas
+            <span class="dup-count" id="dupGroupCount">0</span>
+        </div>
+        <div class="dup-actions">
+            <label class="dup-sens" title="Distancia máxima de Hamming: más alto = detecta más parecidas">
+                Sensibilidad
+                <input type="range" id="dupThreshold" min="0" max="16" value="3" oninput="onDupThresholdChange()">
+                <span id="dupThreshVal">3</span>
+            </label>
+            <button class="pending-btn" onclick="analizarDuplicados()">↻ Reanalizar</button>
+            <button class="pending-btn" id="dupToggle" onclick="toggleDupSection()">▾ Ocultar</button>
+        </div>
+    </div>
+    <p class="dup-hint">
+        Se compara la huella visual (perceptual) de cada foto. Las que resultan
+        casi idénticas se agrupan. La <strong>mejor clasificada</strong> (nombre más largo)
+        se marca como original; las demás muestran su <strong>distancia</strong> (0 = idéntica).
+        Revisa y envía a papelera las repetidas.
+    </p>
+    <div class="dup-progress" id="dupProgress"></div>
+    <div class="dup-groups" id="dupGroups"></div>
+</div>
+
 
 <!-- STATUS BAR -->
 <div class="status-bar" id="statusBar">
@@ -2079,6 +2350,52 @@
             <button class="retag-save" onclick="guardarCambioFecha()">Guardar</button>
         </div>
         <div class="retag-status" id="fechaModalStatus"></div>
+    </div>
+</div>
+
+<!-- MODAL CONFIGURAR DEPÓSITO (reclasificación por lote) -->
+<div id="bktConfigModal">
+    <div class="retag-box">
+        <div class="retag-title">
+            <span>Configurar Depósito <span id="mkDepNum">1</span></span>
+            <button class="settings-close" onclick="cerrarConfigDeposito()">×</button>
+        </div>
+        <div class="retag-field">
+            <label class="field-label">Disciplina</label>
+            <select id="mkDisc" class="field-input" onchange="onMkDiscChange()">
+                <option value="">— Seleccionar —</option>
+                <option value="civil">Civil</option>
+                <option value="em">Electromecánica</option>
+            </select>
+        </div>
+        <div class="retag-field">
+            <label class="field-label">Tema</label>
+            <select id="mkTema" class="field-input" onchange="onMkTemaChange()">
+                <option value="">— Elige disciplina —</option>
+            </select>
+        </div>
+        <div id="mkNiv"></div>
+        <div class="retag-field" id="mkSugField" style="display:none;">
+            <label class="field-label">Títulos del catálogo</label>
+            <div class="retag-sugeridos" id="mkSug"></div>
+        </div>
+        <div class="retag-field">
+            <label class="field-label">Título</label>
+            <input type="text" id="mkTit" class="field-input" placeholder="Ej: Vista frontal…">
+        </div>
+        <div class="retag-field">
+            <label class="field-label">Fecha nueva (opcional)</label>
+            <input type="date" id="mkFecha" class="field-input">
+        </div>
+        <p style="font-size:11px;color:var(--text-muted);line-height:1.5;margin-top:2px;">
+            Define una clasificación (tema + título) y/o una fecha nueva. Se aplicará
+            a todas las fotos de este depósito al pulsar <strong>Aplicar todo</strong>.
+        </p>
+        <div class="retag-actions">
+            <button class="retag-cancel" onclick="limpiarConfigDeposito()">Limpiar</button>
+            <button class="retag-cancel" onclick="cerrarConfigDeposito()">Cancelar</button>
+            <button class="retag-save" onclick="guardarConfigDeposito()">Guardar</button>
+        </div>
     </div>
 </div>
 
@@ -2461,7 +2778,7 @@
                 : `https://drive.google.com/thumbnail?id=${f.id}&sz=w320&key=${apiKey}`;
             const sel = pendingSel.has(f.id) ? ' selected' : '';
             const fechaTxt = formatFecha(f.fecha) || '';
-            return `<div class="pending-card${sel}" data-id="${f.id}" onclick="togglePendingSelect('${f.id}')" title="${f.name}">
+            return `<div class="pending-card${sel}" draggable="true" data-fileid="${f.id}" data-id="${f.id}" onclick="togglePendingSelect('${f.id}')" title="${f.name}">
                 <img src="${thumb}" loading="lazy" onerror="${_imgFallback}">
                 <button class="pp-zoom" title="Ver foto" onclick="event.stopPropagation();abrirPreviewPendiente('${f.id}')">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -3511,7 +3828,7 @@
         }
 
         return `
-        <div class="photo-card${isUnclassified ? ' unclassified' : ''}" onclick="openLightbox(${f._idx})" title="${f.temaSecundario}">
+        <div class="photo-card${isUnclassified ? ' unclassified' : ''}" draggable="true" data-fileid="${f.id}" onclick="openLightbox(${f._idx})" title="${f.temaSecundario}">
             <img src="${thumb}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%231e2436%22 width=%22100%22 height=%22100%22/><text y=%2255%22 x=%2250%22 text-anchor=%22middle%22 font-size=%2228%22>📷</text></svg>'">
             <div class="overlay"></div>
             ${isUnclassified ? `<div class="unclassified-icon">⚠ ${statusLabel[f._classification] || '?'}</div>` : ''}
@@ -5008,6 +5325,775 @@
         if (document.getElementById('pdfModal').classList.contains('open'))      cerrarPdf();
         else if (document.getElementById('informeModal').classList.contains('open')) cerrarInforme();
     });
+
+    // ══════════════════════════════════════════════════════════════════════
+    // DEPÓSITOS DE RECLASIFICACIÓN POR LOTE
+    // 5 depósitos: se arrastran (o se tocan con el depósito activo) fotos del
+    // grid o de Pendientes; cada depósito define una clasificación y/o fecha;
+    // "Aplicar todo" manda TODAS las operaciones en un solo POST al Apps Script.
+    // ══════════════════════════════════════════════════════════════════════
+    const BK_N = 5;
+    let bucketItems  = Array.from({ length: BK_N }, () => new Set());
+    let bucketTarget = Array.from({ length: BK_N }, () => null);  // {disc,tema,niveles,titulo,fecha} | null
+    let bktArmed     = -1;      // índice del depósito activo para toque, o -1
+    let dockOpen     = false;
+    let _bktEditing  = -1;      // depósito que se está configurando en el modal
+
+    function toggleBatchDock() {
+        dockOpen = !dockOpen;
+        const dock = document.getElementById('batchDock');
+        const fab  = document.getElementById('batchFab');
+        dock.classList.toggle('open', dockOpen);
+        dock.setAttribute('aria-hidden', dockOpen ? 'false' : 'true');
+        fab.classList.toggle('active', dockOpen);
+        document.body.classList.toggle('batch-on', dockOpen);
+        if (!dockOpen) desarmarDeposito();
+    }
+
+    function _discLabel(d) { return d === 'em' ? 'EM' : (d === 'civil' ? 'Civil' : ''); }
+
+    // ── Construcción de los 5 depósitos (una sola vez) ──────────────────────
+    function renderBucketShells() {
+        const cont = document.getElementById('dockBuckets');
+        if (!cont || cont.dataset.built === '1') return;
+        let html = '';
+        for (let i = 0; i < BK_N; i++) {
+            html += `
+            <div class="bkt" id="bkt${i}" data-i="${i}">
+                <div class="bkt-head">
+                    <span class="bkt-name">Depósito ${i + 1}</span>
+                    <span class="bkt-count zero" id="bkCount${i}">0</span>
+                    <span class="spacer"></span>
+                    <button class="bkt-ico" id="bkArm${i}" title="Activar para tocar fotos" onclick="armarDeposito(${i})">◎</button>
+                    <button class="bkt-ico" title="Configurar clasificación / fecha" onclick="abrirConfigDeposito(${i})">⚙</button>
+                    <button class="bkt-ico" title="Vaciar depósito" onclick="vaciarDeposito(${i})">🗑</button>
+                </div>
+                <div class="bkt-target" id="bkTarget${i}" onclick="abrirConfigDeposito(${i})" title="Toca para configurar">
+                    <span class="tg-empty">Toca para definir clasificación / fecha</span>
+                </div>
+                <div class="bkt-items" id="bkItems${i}"></div>
+            </div>`;
+        }
+        cont.innerHTML = html;
+        cont.dataset.built = '1';
+
+        // Drop de fotos en cada depósito
+        for (let i = 0; i < BK_N; i++) {
+            const el = document.getElementById('bkt' + i);
+            el.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; el.classList.add('drop'); });
+            el.addEventListener('dragleave', e => { if (!el.contains(e.relatedTarget)) el.classList.remove('drop'); });
+            el.addEventListener('drop', e => {
+                e.preventDefault(); el.classList.remove('drop');
+                const id = e.dataTransfer.getData('text/plain');
+                if (id) addToBucket(i, id);
+            });
+        }
+    }
+
+    // ── Modal de configuración de un depósito ───────────────────────────────
+    async function abrirConfigDeposito(i) {
+        _bktEditing = i;
+        document.getElementById('mkDepNum').textContent = i + 1;
+        const t = bucketTarget[i] || {};
+        const temaSel = document.getElementById('mkTema');
+        document.getElementById('mkNiv').innerHTML = '';
+        document.getElementById('mkSug').innerHTML = '';
+        document.getElementById('mkSugField').style.display = 'none';
+        document.getElementById('mkTit').value = t.titulo || '';
+        document.getElementById('mkFecha').value = (t.fecha && t.fecha.length === 8)
+            ? `${t.fecha.slice(0,4)}-${t.fecha.slice(4,6)}-${t.fecha.slice(6,8)}` : '';
+
+        document.getElementById('mkDisc').value = t.disc || '';
+        temaSel.innerHTML = '<option value="">— Elige disciplina —</option>';
+        if (t.disc) {
+            const topics = await loadTopics(t.disc);
+            topics.forEach(tp => {
+                const o = document.createElement('option');
+                o.value = tp.label; o.textContent = tp.label;
+                temaSel.appendChild(o);
+            });
+            if (t.tema) {
+                temaSel.value = t.tema;
+                const found = topics.find(tp => tp.label === t.tema);
+                if (found) {
+                    populateRetagNiveles(found, [t.tema, ...(t.niveles || [])], 'mkNiv');
+                    populateRetagSugeridos(found, t.titulo || '', {
+                        fieldId: 'mkSugField', containerId: 'mkSug', tituloInputId: 'mkTit'
+                    });
+                }
+            }
+        }
+        document.getElementById('bktConfigModal').classList.add('open');
+    }
+
+    async function onMkDiscChange() {
+        const disc = document.getElementById('mkDisc').value;
+        const temaSel = document.getElementById('mkTema');
+        temaSel.innerHTML = '<option value="">— Seleccionar —</option>';
+        document.getElementById('mkNiv').innerHTML = '';
+        document.getElementById('mkSug').innerHTML = '';
+        document.getElementById('mkSugField').style.display = 'none';
+        if (disc) {
+            const topics = await loadTopics(disc);
+            topics.forEach(t => {
+                const o = document.createElement('option');
+                o.value = t.label; o.textContent = t.label;
+                temaSel.appendChild(o);
+            });
+        }
+    }
+
+    async function onMkTemaChange() {
+        const disc = document.getElementById('mkDisc').value;
+        const main = document.getElementById('mkTema').value;
+        document.getElementById('mkNiv').innerHTML = '';
+        document.getElementById('mkSug').innerHTML = '';
+        document.getElementById('mkSugField').style.display = 'none';
+        if (disc && main) {
+            const topics = await loadTopics(disc);
+            const found  = topics.find(t => t.label === main);
+            if (found) {
+                populateRetagNiveles(found, [], 'mkNiv');
+                populateRetagSugeridos(found, '', {
+                    fieldId: 'mkSugField', containerId: 'mkSug', tituloInputId: 'mkTit'
+                });
+            }
+        }
+    }
+
+    function guardarConfigDeposito() {
+        if (_bktEditing < 0) return;
+        const disc    = document.getElementById('mkDisc').value;
+        const tema    = document.getElementById('mkTema').value.trim();
+        const titulo  = document.getElementById('mkTit').value.trim();
+        const niveles = Array.from(document.querySelectorAll('#mkNiv select'))
+                            .map(s => s.value.trim()).filter(Boolean);
+        const fechaRaw = document.getElementById('mkFecha').value;   // YYYY-MM-DD
+        const fecha    = fechaRaw ? fechaRaw.replace(/-/g, '') : '';
+        bucketTarget[_bktEditing] = { disc, tema, titulo, niveles, fecha };
+        refreshBucketTarget(_bktEditing);
+        cerrarConfigDeposito();
+    }
+
+    function limpiarConfigDeposito() {
+        if (_bktEditing < 0) return;
+        bucketTarget[_bktEditing] = null;
+        refreshBucketTarget(_bktEditing);
+        cerrarConfigDeposito();
+    }
+
+    function cerrarConfigDeposito() {
+        document.getElementById('bktConfigModal').classList.remove('open');
+        _bktEditing = -1;
+    }
+
+    // Lee el objetivo (target) almacenado de un depósito
+    function readBucketTarget(i) {
+        const t = bucketTarget[i] || {};
+        const tema   = (t.tema   || '').trim();
+        const titulo = (t.titulo || '').trim();
+        const fecha  = t.fecha || '';
+        return {
+            disc: t.disc || '', tema, titulo,
+            niveles: t.niveles || [], fecha,
+            hasClasif: !!(tema && titulo),
+            hasFecha:  !!fecha
+        };
+    }
+
+    function refreshBucketTarget(i) {
+        const t  = readBucketTarget(i);
+        const el = document.getElementById('bkTarget' + i);
+        const bits = [];
+        if (t.hasClasif) {
+            const nivTxt = t.niveles.length ? ' / ' + t.niveles.join(' / ') : '';
+            bits.push(`<span class="tg-clasif">${_discLabel(t.disc)} · ${t.tema}${nivTxt} · ${t.titulo}</span>`);
+        }
+        if (t.hasFecha) bits.push(`<span class="tg-fecha">→ ${formatFecha(t.fecha)}</span>`);
+        el.innerHTML = bits.length ? bits.join('<br>') : '<span class="tg-empty">Toca para definir clasificación / fecha</span>';
+        updateDockState();
+    }
+
+    // ── Añadir / quitar fotos ───────────────────────────────────────────────
+    function addToBucket(i, fileId) {
+        if (!fileId) return;
+        for (let k = 0; k < BK_N; k++) if (k !== i) bucketItems[k].delete(fileId);   // única pertenencia
+        bucketItems[i].add(fileId);
+        for (let k = 0; k < BK_N; k++) renderBucketItems(k);
+        updateDockState();
+    }
+
+    function removeFromBucket(i, fileId) {
+        bucketItems[i].delete(fileId);
+        renderBucketItems(i);
+        updateDockState();
+    }
+
+    function vaciarDeposito(i) {
+        bucketItems[i].clear();
+        renderBucketItems(i);
+        updateDockState();
+    }
+
+    function renderBucketItems(i) {
+        const cont = document.getElementById('bkItems' + i);
+        if (!cont) return;
+        const apiKey = localStorage.getItem('viewer_api_key');
+        cont.innerHTML = Array.from(bucketItems[i]).map(id => {
+            const f = allFiles.find(x => x.id === id);
+            const thumb = (f && f.thumbnailLink)
+                ? f.thumbnailLink.replace(/=s\d+/, '=s160')
+                : `https://drive.google.com/thumbnail?id=${id}&sz=w160&key=${apiKey}`;
+            return `<div class="bkt-thumb" title="${f ? (f.name || '') : ''}">
+                <img src="${thumb}" loading="lazy" onerror="${_imgFallback}">
+                <button class="rm" title="Quitar" onclick="removeFromBucket(${i},'${id}')">×</button>
+            </div>`;
+        }).join('');
+        const c = document.getElementById('bkCount' + i);
+        c.textContent = bucketItems[i].size;
+        c.classList.toggle('zero', bucketItems[i].size === 0);
+    }
+
+    // ── Depósito activo (toque en vez de arrastrar) ─────────────────────────
+    function armarDeposito(i) {
+        bktArmed = (bktArmed === i) ? -1 : i;
+        for (let k = 0; k < BK_N; k++) {
+            document.getElementById('bkt' + k).classList.toggle('armed', k === bktArmed);
+            document.getElementById('bkArm' + k).classList.toggle('on', k === bktArmed);
+        }
+        document.body.classList.toggle('batch-arm', bktArmed >= 0);
+    }
+    function desarmarDeposito() {
+        bktArmed = -1;
+        for (let k = 0; k < BK_N; k++) {
+            const el = document.getElementById('bkt' + k);
+            if (el) el.classList.remove('armed');
+            const b = document.getElementById('bkArm' + k);
+            if (b) b.classList.remove('on');
+        }
+        document.body.classList.remove('batch-arm');
+    }
+
+    // ── Estado del dock (badge + botón aplicar) ─────────────────────────────
+    function updateDockState() {
+        let total = 0, listos = 0;
+        for (let i = 0; i < BK_N; i++) {
+            const n = bucketItems[i].size;
+            total += n;
+            if (n > 0) { const t = readBucketTarget(i); if (t.hasClasif || t.hasFecha) listos += n; }
+        }
+        const badge = document.getElementById('batchFabBadge');
+        badge.textContent = total;
+        badge.classList.toggle('show', total > 0);
+        const btn = document.getElementById('dockApplyBtn');
+        btn.textContent = `Aplicar todo (${listos})`;
+        btn.disabled = listos === 0;
+    }
+
+    // ── Construir las operaciones de un depósito ────────────────────────────
+    function buildOpsForBucket(i, seqMap, localMap, ops, origin) {
+        const t = readBucketTarget(i);
+        if (!bucketItems[i].size || (!t.hasClasif && !t.hasFecha)) return;
+
+        bucketItems[i].forEach(fileId => {
+            const f = allFiles.find(x => x.id === fileId);
+            if (!f) return;
+            const extMatch = (f.name || '').match(/\.([^.]+)$/);
+            const ext = extMatch ? extMatch[1] : 'jpg';
+
+            if (t.hasClasif) {
+                const partesTema    = [t.tema, ...t.niveles].join('-');
+                const clasifLegible = [t.tema, ...t.niveles].join(' / ');
+                const especialidad  = t.disc === 'em' ? 'Electromecánico' : (t.disc === 'civil' ? 'Civil' : '');
+                const fecha = t.fecha || f.fecha || '';
+
+                const clave = `${fecha}__${partesTema}__${t.titulo}`;
+                if (seqMap[clave] == null) seqMap[clave] = _nextSeqStart(fecha, t.titulo, partesTema) - 1;
+                const seq = (seqMap[clave] += 1);
+
+                const newName = fecha
+                    ? `${fecha}_${t.titulo} (${partesTema})_${seq}.${ext}`
+                    : `${t.titulo} (${partesTema})_${seq}.${ext}`;
+
+                const nuevoMeta = {
+                    ...(f.meta || {}),
+                    original: 'si', marca: 'si',
+                    tema: t.tema, especialidad, titulo: t.titulo,
+                    clasificacion: clasifLegible
+                };
+                delete nuevoMeta.pendiente;
+                const desc = JSON.stringify(nuevoMeta);
+
+                ops.push({ fileId, newName, desc });
+                localMap[fileId] = {
+                    ...parseFilename(newName), name: newName,
+                    meta: nuevoMeta, marcaEstado: 'con_marca', description: desc, _xmpChecked: true
+                };
+                origin[fileId] = i;
+
+            } else {   // solo cambio de fecha
+                const fechaNueva = t.fecha;
+                let newName;
+                if (f.fecha && (f.name || '').startsWith(f.fecha)) newName = fechaNueva + f.name.slice(f.fecha.length);
+                else if (f.fecha)                                  newName = f.name.replace(f.fecha, fechaNueva);
+                else                                               newName = `${fechaNueva}_${f.name}`;
+
+                ops.push({ fileId, newName });
+                localMap[fileId] = { ...parseFilename(newName), name: newName, fecha: fechaNueva };
+                origin[fileId] = i;
+            }
+        });
+    }
+
+    // ── Envío del lote: 1 POST (no-cors) + lectura del resultado por GET ─────
+    function _sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    async function _sendBatch(folderId, batchId, ops) {
+        // 1) POST opaco (no-cors, sin headers) — patrón confirmado del proyecto
+        await fetch(MGMT_SCRIPT_URL, {
+            method: 'POST', mode: 'no-cors',
+            body: JSON.stringify({ action: 'batchops', folderId, batchId, ops })
+        });
+        // 2) Recuperar el archivo de resultado (el POST ya terminó al resolver)
+        for (let intento = 0; intento < 8; intento++) {
+            await _sleep(intento === 0 ? 350 : 550);
+            try {
+                const u = `${MGMT_SCRIPT_URL}?action=batchresult&folderId=${encodeURIComponent(folderId)}` +
+                          `&batchId=${encodeURIComponent(batchId)}&t=${Date.now()}`;
+                const r = await fetch(u, { redirect: 'follow' });
+                const d = await r.json();
+                if (d && d.ok && d.listo && d.resultado) return d.resultado;
+            } catch (e) { /* reintentar */ }
+        }
+        throw new Error('No se pudo leer el resultado del lote (reintentá)');
+    }
+
+    async function aplicarLoteDepositos() {
+        const statusEl = document.getElementById('dockStatus');
+        if (!MGMT_SCRIPT_URL) {
+            statusEl.className = 'dock-status err';
+            statusEl.textContent = 'Configura la URL del Script de Operaciones en Configuración';
+            return;
+        }
+        const folderId = document.getElementById('folderId').value.trim();
+        if (!folderId) {
+            statusEl.className = 'dock-status err';
+            statusEl.textContent = 'Falta el ID de carpeta de Drive';
+            return;
+        }
+
+        const seqMap = {}, localMap = {}, origin = {}, ops = [];
+        for (let i = 0; i < BK_N; i++) buildOpsForBucket(i, seqMap, localMap, ops, origin);
+
+        if (!ops.length) {
+            statusEl.className = 'dock-status err';
+            statusEl.textContent = 'Agrega fotos y define clasificación o fecha en al menos un depósito';
+            return;
+        }
+
+        const btn = document.getElementById('dockApplyBtn');
+        btn.disabled = true;
+        statusEl.className = 'dock-status run';
+        statusEl.textContent = `Procesando ${ops.length} foto${ops.length !== 1 ? 's' : ''} en un lote…`;
+
+        const batchId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+        let resultado;
+        try {
+            resultado = await _sendBatch(folderId, batchId, ops);
+        } catch (err) {
+            statusEl.className = 'dock-status err';
+            statusEl.textContent = 'Error: ' + err.message;
+            btn.disabled = false;
+            return;
+        }
+
+        // Mapear resultados por fileId
+        const byId = {};
+        (resultado.resultados || []).forEach(r => { byId[r.fileId] = r; });
+
+        let ok = 0, err = 0;
+        Object.keys(localMap).forEach(fileId => {
+            const r = byId[fileId];
+            if (r && r.ok) {
+                const inAll = allFiles.find(x => x.id === fileId);
+                if (inAll) { invalidarMarcaCache(inAll); Object.assign(inAll, localMap[fileId]); }
+                if (typeof pendingSel !== 'undefined') pendingSel.delete(fileId);
+                const bi = origin[fileId];
+                if (bi != null) bucketItems[bi].delete(fileId);
+                ok++;
+            } else {
+                err++;
+            }
+        });
+
+        // Refrescar toda la interfaz
+        annotateAllFiles();
+        updateUnclassifiedPanel();
+        updatePendingPanel();
+        applyFilters();
+        buildTimeline();
+        for (let i = 0; i < BK_N; i++) renderBucketItems(i);
+        updateDockState();
+
+        if (err === 0) {
+            statusEl.className = 'dock-status ok';
+            statusEl.textContent = `✓ ${ok} foto${ok !== 1 ? 's' : ''} procesada${ok !== 1 ? 's' : ''} en un solo lote`;
+        } else {
+            statusEl.className = 'dock-status err';
+            statusEl.textContent = `${ok} procesadas, ${err} con error`;
+        }
+        btn.disabled = false;
+    }
+
+    // ── Arrastre y toque global sobre las tarjetas de foto ──────────────────
+    document.addEventListener('dragstart', e => {
+        const card = e.target.closest('.photo-card, .pending-card');
+        if (!card || !card.dataset.fileid) return;
+        e.dataTransfer.setData('text/plain', card.dataset.fileid);
+        e.dataTransfer.effectAllowed = 'copy';
+        card.classList.add('bkt-dragging');
+    });
+    document.addEventListener('dragend', e => {
+        const card = e.target.closest('.photo-card, .pending-card');
+        if (card) card.classList.remove('bkt-dragging');
+    });
+    // Toque cuando hay un depósito activo (captura: gana al onclick de la tarjeta)
+    document.addEventListener('click', e => {
+        if (bktArmed < 0) return;
+        const card = e.target.closest('.photo-card, .pending-card');
+        if (!card || !card.dataset.fileid) return;
+        e.stopPropagation(); e.preventDefault();
+        addToBucket(bktArmed, card.dataset.fileid);
+        card.classList.add('bkt-dragging');
+        setTimeout(() => card.classList.remove('bkt-dragging'), 160);
+    }, true);
+
+    function _initBatchDock() { renderBucketShells(); updateDockState(); }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _initBatchDock);
+    } else {
+        _initBatchDock();
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════
+    // DETECCIÓN DE FOTOS REPETIDAS (hash perceptual dHash de 64 bits)
+    // Reduce cada imagen a una huella; agrupa las que tienen distancia de
+    // Hamming ≤ umbral. Detecta re-subidas re-comprimidas o redimensionadas.
+    // ══════════════════════════════════════════════════════════════════════
+    const DUP_CACHE_KEY = 'dup_dhash_v1';
+    let dupHash = {};          // fileId → [hi, lo]  (64 bits en dos enteros)
+    let _dupClusters = [];     // grupos actuales (arreglos de archivos)
+    let _dupCanvas = null;
+
+    function _loadDupCache() {
+        try {
+            const raw = localStorage.getItem(DUP_CACHE_KEY);
+            if (!raw) return;
+            const o = JSON.parse(raw);
+            Object.keys(o).forEach(id => {
+                const p = String(o[id]).split(',');
+                const a = Number(p[0]), b = Number(p[1]);
+                if (!isNaN(a) && !isNaN(b)) dupHash[id] = [a >>> 0, b >>> 0];
+            });
+        } catch (e) { /* cache corrupta → se ignora */ }
+    }
+    function _saveDupCache() {
+        try {
+            const ids = new Set(allFiles.map(f => f.id));
+            const o = {};
+            Object.keys(dupHash).forEach(id => { if (ids.has(id)) o[id] = dupHash[id].join(','); });
+            localStorage.setItem(DUP_CACHE_KEY, JSON.stringify(o));
+        } catch (e) { /* sin espacio → no crítico */ }
+    }
+
+    // ── Hash perceptual ─────────────────────────────────────────────────────
+    function _dupPopcount(x) {
+        x = x - ((x >> 1) & 0x55555555);
+        x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
+        x = (x + (x >> 4)) & 0x0f0f0f0f;
+        return (x * 0x01010101) >> 24;
+    }
+    function _dupHamming(a, b) {
+        return _dupPopcount((a[0] ^ b[0]) >>> 0) + _dupPopcount((a[1] ^ b[1]) >>> 0);
+    }
+
+    function _loadCorsImage(url) {
+        return new Promise((res, rej) => {
+            const im = new Image();
+            im.crossOrigin = 'anonymous';
+            im.onload  = () => res(im);
+            im.onerror = () => rej(new Error('load'));
+            im.src = url;
+        });
+    }
+
+    async function _computeDHash(f) {
+        const url = f.thumbnailLink
+            ? f.thumbnailLink.replace(/=s\d+/, '=s256')
+            : `https://drive.google.com/thumbnail?id=${f.id}&sz=w256&key=${localStorage.getItem('viewer_api_key') || ''}`;
+        const img = await _loadCorsImage(url);
+
+        const W = 9, H = 8;
+        if (!_dupCanvas) _dupCanvas = document.createElement('canvas');
+        _dupCanvas.width = W; _dupCanvas.height = H;
+        const ctx = _dupCanvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0, W, H);
+        const d = ctx.getImageData(0, 0, W, H).data;   // lanza SecurityError si el canvas quedó "tainted"
+
+        const g = new Array(W * H);
+        for (let i = 0; i < W * H; i++) {
+            const p = i * 4;
+            g[i] = 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
+        }
+        let hi = 0, lo = 0, bit = 0;
+        for (let y = 0; y < H; y++) {
+            for (let x = 0; x < W - 1; x++) {
+                if (g[y * W + x] < g[y * W + x + 1]) {
+                    if (bit < 32) hi = (hi | (1 << bit)) >>> 0;
+                    else          lo = (lo | (1 << (bit - 32))) >>> 0;
+                }
+                bit++;
+            }
+        }
+        return [hi >>> 0, lo >>> 0];
+    }
+
+    // Calcula huellas faltantes con concurrencia limitada
+    async function _hashAll(files, onProgress) {
+        const pend = files.filter(f => !dupHash[f.id]);
+        const total = pend.length;
+        let done = 0, failed = 0, idx = 0;
+        onProgress(0, total);
+        const worker = async () => {
+            while (idx < pend.length) {
+                const f = pend[idx++];
+                try { dupHash[f.id] = await _computeDHash(f); }
+                catch (e) { failed++; }
+                onProgress(++done, total);
+            }
+        };
+        const n = Math.min(6, pend.length);
+        await Promise.all(Array.from({ length: n }, worker));
+        return { failed };
+    }
+
+    // ── Flujo principal ─────────────────────────────────────────────────────
+    async function analizarDuplicados() {
+        const sec  = document.getElementById('dupSection');
+        const prog = document.getElementById('dupProgress');
+        sec.classList.add('visible');
+        sec.classList.remove('collapsed');
+        document.getElementById('dupToggle').textContent = '▾ Ocultar';
+
+        if (!allFiles.length) {
+            prog.textContent = 'Primero carga una carpeta de fotos.';
+            document.getElementById('dupGroups').innerHTML = '';
+            document.getElementById('dupGroupCount').textContent = '0';
+            return;
+        }
+
+        sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        prog.textContent = 'Calculando huellas visuales…';
+        await _hashAll(allFiles, (done, total) => {
+            prog.textContent = total ? `Calculando huellas ${done}/${total}…` : 'Usando huellas en caché…';
+        });
+        _saveDupCache();
+
+        reclusterDuplicados();
+
+        const noAnaliz  = allFiles.filter(f => !dupHash[f.id]).length;
+        const analizadas = allFiles.length - noAnaliz;
+        prog.textContent = `${analizadas} foto${analizadas !== 1 ? 's' : ''} analizada${analizadas !== 1 ? 's' : ''}` +
+                           (noAnaliz ? ` · ${noAnaliz} no analizable${noAnaliz !== 1 ? 's' : ''}` : '');
+    }
+
+    // ── Agrupamiento por umbral (rápido: usa huellas en memoria) ────────────
+    function reclusterDuplicados() {
+        const thr   = parseInt(document.getElementById('dupThreshold').value, 10);
+        const items = allFiles.filter(f => dupHash[f.id]);
+
+        // Union-Find
+        const parent = {};
+        items.forEach(f => parent[f.id] = f.id);
+        const find = x => { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; };
+        const uni  = (a, b) => { const ra = find(a), rb = find(b); if (ra !== rb) parent[ra] = rb; };
+
+        for (let i = 0; i < items.length; i++) {
+            const hi = dupHash[items[i].id];
+            for (let j = i + 1; j < items.length; j++) {
+                if (_dupHamming(hi, dupHash[items[j].id]) <= thr) uni(items[i].id, items[j].id);
+            }
+        }
+
+        const map = {};
+        items.forEach(f => { const r = find(f.id); (map[r] = map[r] || []).push(f); });
+
+        // Solo grupos con 2+ fotos; ordenar cada grupo (representante = más antigua)
+        _dupClusters = Object.values(map)
+            .filter(g => g.length >= 2)
+            .map(g => g.slice().sort((a, b) =>
+                (b.name || '').length - (a.name || '').length ||   // 1º = mejor clasificada (nombre más largo)
+                (a.fecha || '').localeCompare(b.fecha || '') ||
+                (a.name || '').localeCompare(b.name || '')))
+            .sort((a, b) => b.length - a.length);
+
+        renderDupGroups();
+    }
+
+    function renderDupGroups() {
+        const cont = document.getElementById('dupGroups');
+        document.getElementById('dupGroupCount').textContent = _dupClusters.length;
+
+        if (!_dupClusters.length) {
+            cont.innerHTML = '<div class="dup-empty">No se encontraron fotos repetidas con la sensibilidad actual. Súbela para detectar parecidos más lejanos.</div>';
+            return;
+        }
+
+        cont.innerHTML = _dupClusters.map((grp, gi) => {
+            const rep = grp[0];
+            const cards = grp.map((f, k) => {
+                const thumb = f.thumbnailLink
+                    ? f.thumbnailLink.replace(/=s\d+/, '=s320')
+                    : `https://drive.google.com/thumbnail?id=${f.id}&sz=w320&key=${localStorage.getItem('viewer_api_key') || ''}`;
+                const dist  = k === 0 ? 0 : _dupHamming(dupHash[rep.id], dupHash[f.id]);
+                const badge = k === 0
+                    ? '<div class="dg-badge rep">ORIGINAL</div>'
+                    : `<div class="dg-badge dist">dist ${dist}</div>`;
+                return `<div class="dg-card${k === 0 ? ' rep' : ''}">
+                    <div class="dg-thumb">
+                        <img src="${thumb}" loading="lazy" onclick="verFotoDup('${f.id}')" onerror="${_imgFallback}">
+                        ${badge}
+                    </div>
+                    <div class="dg-meta">
+                        <div class="dg-name">${f.name || ''}</div>
+                        <div class="dg-sub">${formatFecha(f.fecha) || 'Sin fecha'}</div>
+                    </div>
+                    <div class="dg-actions">
+                        <button class="dg-btn" onclick="verFotoDup('${f.id}')">Ver</button>
+                        <button class="dg-btn del" onclick="eliminarFotoDup('${f.id}')">Papelera</button>
+                    </div>
+                </div>`;
+            }).join('');
+            return `<div class="dup-group">
+                <div class="dg-head">
+                    <span class="dg-title">Grupo ${gi + 1} <span class="n">· ${grp.length} fotos</span></span>
+                    <button class="dg-purge" onclick="depurarGrupoDup(${gi})">Conservar la 1.ª · enviar ${grp.length - 1} a papelera</button>
+                </div>
+                <div class="dg-items">${cards}</div>
+            </div>`;
+        }).join('');
+    }
+
+    function onDupThresholdChange() {
+        document.getElementById('dupThreshVal').textContent = document.getElementById('dupThreshold').value;
+        if (Object.keys(dupHash).length) reclusterDuplicados();
+    }
+
+    function toggleDupSection() {
+        const sec = document.getElementById('dupSection');
+        const col = sec.classList.toggle('collapsed');
+        document.getElementById('dupToggle').textContent = col ? '▸ Mostrar' : '▾ Ocultar';
+    }
+
+    function verFotoDup(id) { abrirPreviewPendiente(id); }
+
+    async function _trashOne(id) {
+        const url = `${MGMT_SCRIPT_URL}?action=delete&fileId=${encodeURIComponent(id)}&t=${Date.now()}`;
+        const r = await fetch(url, { redirect: 'follow' });
+        const d = await r.json();
+        if (!d.ok) throw new Error(d.error || 'Error al eliminar');
+        allFiles = allFiles.filter(x => x.id !== id);
+        filtered = filtered.filter(x => x.id !== id);
+        delete dupHash[id];
+        if (typeof pendingSel !== 'undefined') pendingSel.delete(id);
+        for (let i = 0; i < BK_N; i++) bucketItems[i].delete(id);
+    }
+
+    function _refrescarTrasBorrado() {
+        _saveDupCache();
+        annotateAllFiles();
+        updateUnclassifiedPanel();
+        updatePendingPanel();
+        applyFilters();
+        buildTimeline();
+        for (let i = 0; i < BK_N; i++) renderBucketItems(i);
+        updateDockState();
+    }
+
+    async function eliminarFotoDup(id) {
+        if (!MGMT_SCRIPT_URL) {
+            document.getElementById('dupProgress').textContent = '⚠ Configura la URL del Script de Operaciones en Configuración';
+            return;
+        }
+        if (!confirm('¿Enviar esta foto a la papelera de Drive?')) return;
+        const prog = document.getElementById('dupProgress');
+        try {
+            await _trashOne(id);
+            _refrescarTrasBorrado();
+            reclusterDuplicados();
+            prog.textContent = '✓ Foto enviada a la papelera';
+        } catch (e) {
+            prog.textContent = 'Error al eliminar: ' + e.message;
+        }
+    }
+
+    async function depurarGrupoDup(gi) {
+        if (!MGMT_SCRIPT_URL) {
+            document.getElementById('dupProgress').textContent = '⚠ Configura la URL del Script de Operaciones en Configuración';
+            return;
+        }
+        const grp = _dupClusters[gi];
+        if (!grp || grp.length < 2) return;
+        const rest = grp.slice(1);   // conservar la 1.ª (representante)
+        if (!confirm(`Enviar a papelera ${rest.length} foto(s) repetida(s) y conservar la 1.ª del grupo?`)) return;
+
+        const prog = document.getElementById('dupProgress');
+        let ok = 0, err = 0;
+        for (let i = 0; i < rest.length; i++) {
+            prog.textContent = `Eliminando ${i + 1}/${rest.length}…`;
+            try { await _trashOne(rest[i].id); ok++; } catch (e) { err++; }
+        }
+        _refrescarTrasBorrado();
+        reclusterDuplicados();
+        prog.textContent = err ? `${ok} enviadas a papelera, ${err} con error` : `✓ ${ok} repetida(s) enviada(s) a papelera`;
+    }
+
+    _loadDupCache();
+
 </script>
+
+<!-- ══ DEPÓSITOS DE RECLASIFICACIÓN POR LOTE ══════════════════════════════ -->
+<button class="batch-fab" id="batchFab" onclick="toggleBatchDock()" title="Reclasificación por lote">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 7h18M3 12h18M3 17h18"/><circle cx="7" cy="7" r="0"/></svg>
+    Depósitos
+    <span class="fab-badge" id="batchFabBadge">0</span>
+</button>
+
+<aside class="batch-dock" id="batchDock" aria-hidden="true">
+    <div class="dock-head">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+            <path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg>
+        <h3>Reclasificación por lote</h3>
+        <button class="dock-x" onclick="toggleBatchDock()" title="Cerrar">×</button>
+    </div>
+    <p class="dock-hint">
+        Arrastra fotos del grid o de <strong>Pendientes</strong> a un depósito
+        (o pulsa <strong>◎</strong> para activarlo y luego toca las fotos).
+        Define en cada depósito una <strong>clasificación</strong> y/o una
+        <strong>fecha nueva</strong>, y pulsa <strong>Aplicar todo</strong>: se
+        procesa en un solo lote.
+    </p>
+    <div class="dock-buckets" id="dockBuckets"></div>
+    <div class="dock-foot">
+        <button class="dock-apply" id="dockApplyBtn" onclick="aplicarLoteDepositos()" disabled>
+            Aplicar todo (0)
+        </button>
+        <div class="dock-status" id="dockStatus"></div>
+    </div>
+</aside>
+
 </body>
 </html>
