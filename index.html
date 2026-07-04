@@ -399,8 +399,18 @@
             object-fit: contain;
             box-shadow: 0 30px 80px rgba(0,0,0,.6);
             transition: opacity .18s;
+            cursor: zoom-in;
+            user-select: none;
+            -webkit-user-select: none;
         }
         #lbImg.loading { opacity: .2; }
+        #lbImg.zoomed {
+            cursor: zoom-out;
+            transition: opacity .18s, transform .2s ease;
+            will-change: transform;
+        }
+        /* Al ampliar, el contenedor recorta la imagen a su marco (zoom dentro del recuadro) */
+        .lb-img-container.zoomed { overflow: hidden; border-radius: 10px; }
 
         /* El contenedor del lightbox puede hacer scroll si hace falta, pero sin barra visible */
         .lb-content::-webkit-scrollbar { display: none; }
@@ -1105,6 +1115,31 @@
         }
         .tl-pdf-btn:hover { background: rgba(59,130,246,.24); }
 
+        /* Fila de botones (PDF / TXT) en la cabecera del día */
+        .tl-dh-btns {
+            display: flex;
+            gap: 3px;
+            justify-content: center;
+            margin-bottom: 3px;
+        }
+        .tl-dh-btns .tl-pdf-btn,
+        .tl-dh-btns .tl-txt-btn { margin: 0; }
+
+        .tl-txt-btn {
+            display: block;
+            cursor: pointer;
+            font-family: 'DM Mono', monospace;
+            font-size: 8px; font-weight: 600; letter-spacing: .04em;
+            color: var(--green);
+            background: var(--green-dim);
+            border: 1px solid rgba(34,197,94,.35);
+            border-radius: 5px;
+            padding: 1px 7px;
+            line-height: 1.4;
+        }
+        .tl-txt-btn:hover { background: rgba(34,197,94,.28); }
+        .tl-txt-btn:disabled { opacity: .5; cursor: progress; }
+
         /* ── MODAL PREVISUALIZACIÓN PDF ── */
         #pdfModal {
             display: none; position: fixed; inset: 0; z-index: 340;
@@ -1189,6 +1224,18 @@
             align-items: center; justify-content: center;
         }
         #fechaModal.open { display: flex; animation: lbIn .15s ease; }
+
+        /* ── RANGO TXT MODAL ── */
+        #rangoTxtModal {
+            display: none;
+            position: fixed; inset: 0; z-index: 400;
+            background: rgba(5,7,12,.82);
+            backdrop-filter: blur(10px);
+            align-items: center; justify-content: center;
+        }
+        #rangoTxtModal.open { display: flex; animation: lbIn .15s ease; }
+        .rango-row { display: flex; gap: 12px; }
+        .rango-row .retag-field { flex: 1; margin-bottom: 0; }
 
         /* ── RETAG MODAL ── */
         #retagModal {
@@ -1353,7 +1400,24 @@
             font-weight: 500;
             transition: all .15s;
         }
-        .tl-toggle:hover {
+
+        .tl-range-btn {
+            display: flex; align-items: center; gap: 6px;
+            padding: 5px 11px;
+            margin-right: 8px;
+            border: 1px solid rgba(34,197,94,.35);
+            border-radius: 8px;
+            background: var(--green-dim);
+            color: var(--green);
+            cursor: pointer;
+            font-size: 11px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            transition: all .15s;
+        }
+        .tl-range-btn:hover { background: rgba(34,197,94,.28); }
+        .tl-range-btn svg { flex-shrink: 0; }
+        @media (max-width: 640px) { .tl-range-btn span { display: none; } .tl-range-btn { padding: 5px 8px; } }        .tl-toggle:hover {
             border-color: var(--border-hover);
             color: var(--text);
             background: var(--surface2);
@@ -1764,6 +1828,14 @@
             transform: translateX(105%); transition: transform .22s ease;
         }
         .batch-dock.open { transform: translateX(0); }
+
+        /* Con el dock abierto, empuja el contenido de la página para no tapar
+           la galería (así se pueden ver, seleccionar y arrastrar las fotos).
+           En pantallas estrechas se mantiene el comportamiento de superposición. */
+        @media (min-width: 760px) {
+            body { transition: padding-right .22s ease; }
+            body.batch-on { padding-right: 340px; }
+        }
         .dock-head {
             padding: 15px 16px 12px; border-bottom: 1px solid var(--border);
             display: flex; align-items: center; gap: 9px;
@@ -1860,6 +1932,30 @@
         body.batch-arm .photo-card,
         body.batch-arm .pending-card { cursor: copy; }
         .photo-card.bkt-dragging, .pending-card.bkt-dragging { opacity: .45; }
+
+        /* Foto ya colocada en un depósito: se muestra sombreada/bloqueada */
+        .photo-card.in-bucket, .pending-card.in-bucket {
+            border-color: var(--green) !important;
+        }
+        .photo-card.in-bucket img, .pending-card.in-bucket img {
+            opacity: .32;
+            filter: grayscale(.55);
+        }
+        .photo-card.in-bucket::after, .pending-card.in-bucket::after {
+            content: '✓ En depósito';
+            position: absolute;
+            top: 7px; left: 7px;
+            z-index: 5;
+            background: var(--green);
+            color: #072012;
+            font-size: 9px; font-weight: 700;
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: .01em;
+            padding: 3px 7px;
+            border-radius: 6px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.45);
+            pointer-events: none;
+        }
 
 
         /* ══ DETECCIÓN DE FOTOS REPETIDAS (hash perceptual) ═════════════════ */
@@ -2108,6 +2204,10 @@
         </div>
         <span class="tl-count" id="tlCount"></span>
         <div class="tl-spacer"></div>
+        <button class="tl-range-btn" id="tlRangeBtn" onclick="abrirRangoTxt()" title="Descargar un TXT unificado de un rango de fechas (para la IA)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+            <span>TXT rango</span>
+        </button>
         <button class="tl-toggle" id="tlToggle" onclick="toggleTimeline()">
             <span id="tlToggleText">Ocultar</span>
             <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m18 15-6-6-6 6"/></svg>
@@ -2350,6 +2450,35 @@
             <button class="retag-save" onclick="guardarCambioFecha()">Guardar</button>
         </div>
         <div class="retag-status" id="fechaModalStatus"></div>
+    </div>
+</div>
+
+<!-- RANGO TXT MODAL -->
+<div id="rangoTxtModal">
+    <div class="retag-box" style="max-width:400px;">
+        <div class="retag-title">
+            Descargar TXT por rango
+            <button class="settings-close" onclick="cerrarRangoTxt()">×</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:18px;">
+            Genera un solo archivo <strong>.txt</strong> con las actividades y descripciones
+            de todos los días del rango, para que la IA entienda lo realizado en el período.
+        </p>
+        <div class="rango-row" style="margin-bottom:18px;">
+            <div class="retag-field">
+                <label class="field-label">Desde</label>
+                <input type="date" id="rangoDesde" class="field-input" style="width:100%;">
+            </div>
+            <div class="retag-field">
+                <label class="field-label">Hasta</label>
+                <input type="date" id="rangoHasta" class="field-input" style="width:100%;">
+            </div>
+        </div>
+        <div class="retag-actions">
+            <button class="retag-cancel" onclick="cerrarRangoTxt()">Cancelar</button>
+            <button class="retag-save" id="rangoDescargarBtn" onclick="descargarTxtRango()">Descargar TXT</button>
+        </div>
+        <div class="retag-status" id="rangoStatus"></div>
     </div>
 </div>
 
@@ -2786,6 +2915,7 @@
                 ${fechaTxt ? `<div class="pp-fecha">${fechaTxt}</div>` : ''}
             </div>`;
         }).join('');
+        refreshBucketedCards();
     }
 
     function togglePendingSelect(id) {
@@ -3573,7 +3703,10 @@
             const frag = [];
             frag.push(
                 `<div class="tl-day-head${info.isToday ? ' today' : ''}">` +
+                `<div class="tl-dh-btns">` +
                 `<button class="tl-pdf-btn" title="Generar PDF del informe de este día" onclick="abrirPdfDia('${fecha}')">PDF</button>` +
+                `<button class="tl-txt-btn" title="Descargar TXT con las actividades y descripciones de este día (para la IA)" onclick="descargarTxtDia('${fecha}', this)">TXT</button>` +
+                `</div>` +
                 `<span class="d-num">${info.num}</span>${info.sub}</div>`);
 
             lanes.forEach(l => {
@@ -3809,6 +3942,7 @@
                 </div>
             </div>
         `).join('');
+        refreshBucketedCards();
     }
 
     function photoCard(f, apiKey) {
@@ -3854,7 +3988,78 @@
     function closeLightbox() {
         document.getElementById('lightbox').classList.remove('open');
         document.body.style.overflow = '';
+        _lbResetZoom();
     }
+
+    // ── Zoom en el lightbox (doble clic / doble toque) ──────────────────────
+    const LB_ZOOM = 2.6;          // factor de ampliación
+    let _lbZoom = false;
+
+    function _clampPct(v) { return Math.max(0, Math.min(100, v)); }
+
+    function _lbResetZoom() {
+        _lbZoom = false;
+        const img = document.getElementById('lbImg');
+        const cont = img ? img.closest('.lb-img-container') : null;
+        if (img) {
+            img.classList.remove('zoomed');
+            img.style.transform = '';
+            img.style.transformOrigin = '';
+        }
+        if (cont) cont.classList.remove('zoomed');
+    }
+
+    // Alterna el zoom, centrado en el punto donde se hizo doble clic/toque
+    function lbToggleZoom(clientX, clientY) {
+        const img = document.getElementById('lbImg');
+        if (!img || img.classList.contains('loading')) return;
+        if (_lbZoom) { _lbResetZoom(); return; }
+        const cont = img.closest('.lb-img-container');
+        const r = img.getBoundingClientRect();
+        const px = _clampPct(((clientX - r.left) / r.width)  * 100);
+        const py = _clampPct(((clientY - r.top)  / r.height) * 100);
+        _lbZoom = true;
+        if (cont) cont.classList.add('zoomed');
+        img.classList.add('zoomed');
+        img.style.transformOrigin = `${px}% ${py}%`;
+        img.style.transform = `scale(${LB_ZOOM})`;
+    }
+
+    // Con la imagen ampliada, mover el cursor/dedo desplaza (pan) la zona visible
+    function _lbPan(clientX, clientY) {
+        if (!_lbZoom) return;
+        const img = document.getElementById('lbImg');
+        if (!img) return;
+        const r = img.getBoundingClientRect();
+        // r ya está escalado; usamos su tamaño real en pantalla para mapear el punto
+        const px = _clampPct(((clientX - r.left) / r.width)  * 100);
+        const py = _clampPct(((clientY - r.top)  / r.height) * 100);
+        img.style.transformOrigin = `${px}% ${py}%`;
+    }
+
+    (function _initLbZoom() {
+        const img = document.getElementById('lbImg');
+        if (!img) return;
+        img.addEventListener('dblclick', e => { e.preventDefault(); e.stopPropagation(); lbToggleZoom(e.clientX, e.clientY); });
+        img.addEventListener('mousemove', e => _lbPan(e.clientX, e.clientY));
+
+        // Doble toque en móvil (dblclick no siempre se dispara)
+        let _lastTap = 0;
+        img.addEventListener('touchend', e => {
+            const now = Date.now();
+            if (now - _lastTap < 300 && e.changedTouches.length) {
+                e.preventDefault();
+                const t = e.changedTouches[0];
+                lbToggleZoom(t.clientX, t.clientY);
+            }
+            _lastTap = now;
+        }, { passive: false });
+        img.addEventListener('touchmove', e => {
+            if (!_lbZoom || !e.touches.length) return;
+            e.preventDefault();
+            _lbPan(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+    })();
 
     function lbNavigate(dir) {
         const newIdx = lbIndex + dir;
@@ -3875,6 +4080,7 @@
     function loadLbPhoto(idx) {
         const f = filtered[idx];
 
+        _lbResetZoom();
         // Reiniciar el ocultado visual al cambiar de foto
         lbMarcaOculta = false;
         document.getElementById('lbMarcaVistaTxt').textContent = 'Ocultar marca';
@@ -5217,6 +5423,251 @@
         </div>`;
     }
 
+    // ── DESCARGA TXT (para que la IA entienda lo realizado) ─────────────────
+    // Genera .txt legibles con TODAS las actividades registradas: la etiqueta/
+    // clasificación COMPLETA (con sus niveles), el título, el nº de fotos, las
+    // horas y la DESCRIPCIÓN completa tomada del informe del día.
+    function _diaSemana(fecha) {
+        const d = new Date(+fecha.slice(0,4), +fecha.slice(4,6) - 1, +fecha.slice(6,8));
+        return d.toLocaleDateString('es', { weekday: 'long' });
+    }
+
+    // Etiqueta completa: todos los niveles del tema principal separados por " / "
+    function _etiquetaCompleta(f) {
+        const partes = (f.temaPrincipal || '').split('-').map(s => s.trim()).filter(Boolean);
+        if (partes.length) return partes.join(' / ');
+        return (f.meta && f.meta.clasificacion) ? f.meta.clasificacion : '(sin clasificación)';
+    }
+
+    // Entradas del informe (descripciones) ya cargadas en caché para un día
+    function _entradasInfDia(fecha) {
+        const dia = _informesCache[fecha];
+        return (dia && dia.entradas) ? dia.entradas : {};
+    }
+
+    // Agrupa las fotos de UN día por etiqueta completa + título, ya ordenadas
+    // por disciplina (civil → em → otros) → tema → título.
+    function _gruposDelDia(fecha, sets) {
+        const delDia = allFiles.filter(f => f.fecha === fecha && (f.temaPrincipal || f.temaSecundario));
+        if (!delDia.length) return [];
+        const grupos = new Map();  // clave → { disc, etiqueta, base, titulo, n, horas:Set }
+        delDia.forEach(f => {
+            const etiqueta = _etiquetaCompleta(f);
+            const base     = ((f.temaPrincipal || '').split('-')[0] || '').trim();
+            const titulo   = (f.temaSecundario || '').trim();
+            const disc     = _disciplinaDeTema(base.toLowerCase(), sets);
+            const clave    = disc + '\u00a6' + etiqueta + '\u00a6' + titulo;
+            let g = grupos.get(clave);
+            if (!g) { g = { disc, etiqueta, base, titulo, n: 0, horas: new Set() }; grupos.set(clave, g); }
+            g.n++;
+            if (f.meta && f.meta.hora) g.horas.add(f.meta.hora);
+        });
+        const ordenDisc = { civil: 0, em: 1, otros: 2 };
+        return [...grupos.values()].sort((a, b) =>
+            (ordenDisc[a.disc] ?? 9) - (ordenDisc[b.disc] ?? 9) ||
+            a.etiqueta.localeCompare(b.etiqueta, 'es', { numeric: true }) ||
+            a.titulo.localeCompare(b.titulo, 'es', { numeric: true }));
+    }
+
+    // Construye las líneas de la sección de UN día (encabezados de disciplina +
+    // actividades numeradas desde 1). Devuelve { lines, totFotos, conDesc }.
+    function _bloqueDia(lista, entradasInf) {
+        const laneNombre = { civil: 'CIVIL', em: 'ELECTROMECÁNICA', otros: 'OTROS' };
+        const sep = '-'.repeat(70);
+        const lines = [];
+        let totFotos = 0, conDesc = 0, discActual = null, idx = 0;
+
+        const textoDe = g => {
+            const e = entradasInf[_infKey(g.disc, g.base, g.titulo)];
+            return e ? _textoActivo(e).trim() : '';
+        };
+
+        lista.forEach(g => {
+            totFotos += g.n;
+            if (g.disc !== discActual) {
+                discActual = g.disc;
+                lines.push(sep);
+                lines.push(laneNombre[g.disc] || 'OTROS');
+                lines.push(sep);
+                lines.push('');
+            }
+            idx++;
+            const horas = [...g.horas].sort();
+            const desc  = textoDe(g);
+            if (desc) conDesc++;
+            lines.push(`${idx}) ETIQUETA COMPLETA: ${g.etiqueta}`);
+            lines.push(`   Título        : ${g.titulo || '(sin título)'}`);
+            lines.push(`   Fotografías   : ${g.n}`);
+            if (horas.length) lines.push(`   Hora(s)       : ${horas.join(', ')}`);
+            lines.push('   Descripción de lo realizado:');
+            if (desc) {
+                desc.split('\n').forEach(l => lines.push('     ' + l));
+            } else {
+                lines.push('     — Sin descripción registrada en el informe del día —');
+            }
+            lines.push('');
+        });
+        return { lines, totFotos, conDesc };
+    }
+
+    function _bajarTxt(nombre, texto) {
+        const blob = new Blob([texto], { type: 'text/plain;charset=utf-8' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url; a.download = nombre;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    // ── TXT de un solo día (botón TXT en la cabecera de cada día) ────────────
+    async function descargarTxtDia(fecha, btn) {
+        if (btn) btn.disabled = true;
+        try {
+            await Promise.all([loadTopics('civil'), loadTopics('em')]);
+            const sets = _temaSets();
+
+            const lista = _gruposDelDia(fecha, sets);
+            if (!lista.length) {
+                (typeof showLbToast === 'function' ? showLbToast : alert)('No hay fotos clasificadas en este día.', 'err');
+                return;
+            }
+
+            await cargarInformeDia(fecha);          // deja el informe del día en caché
+            const entradasInf = _entradasInfDia(fecha);
+            const { lines, totFotos, conDesc } = _bloqueDia(lista, entradasInf);
+
+            const fIso = `${fecha.slice(0,4)}-${fecha.slice(4,6)}-${fecha.slice(6,8)}`;
+            const linea = '='.repeat(70);
+            const head = [
+                linea,
+                'INFORME DE ACTIVIDADES DEL DÍA',
+                `Proyecto : ${PROYECTO_PARAM || '—'}`,
+                `Fecha    : ${fIso} (${_diaSemana(fecha)})`,
+                `Resumen  : ${lista.length} actividad(es) · ${totFotos} fotografía(s) · ${conDesc} con descripción`,
+                `Generado : ${new Date().toLocaleString('es')}`,
+                linea,
+                '',
+                'Lista de actividades ejecutadas ese día con su clasificación',
+                'completa y la descripción de lo realizado, para que un asistente',
+                'de IA comprenda con precisión el trabajo del día.',
+                ''
+            ];
+            _bajarTxt(`Actividades_${fecha}.txt`, head.concat(lines).join('\n'));
+        } catch (err) {
+            console.error('Error al generar el TXT del día', err);
+            alert('No se pudo generar el TXT: ' + err.message);
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    // ── TXT unificado de un RANGO de fechas (botón general de la línea de tiempo) ──
+    function abrirRangoTxt() {
+        if (!allFiles.length) {
+            (typeof showLbToast === 'function' ? showLbToast : alert)('Primero carga las fotos.', 'err');
+            return;
+        }
+        // Sugiere el rango a partir de los días con actividad disponibles
+        const dias = [...new Set(allFiles.filter(f => f.fecha).map(f => f.fecha))].sort();
+        const iso = f => f && f.length === 8 ? `${f.slice(0,4)}-${f.slice(4,6)}-${f.slice(6,8)}` : '';
+        const dDesde = document.getElementById('rangoDesde');
+        const dHasta = document.getElementById('rangoHasta');
+        // Respeta el rango activo de la galería si ya hay uno puesto
+        const gd = document.getElementById('fechaDesde').value;
+        const gh = document.getElementById('fechaHasta').value;
+        dDesde.value = gd || (dias.length ? iso(dias[0]) : '');
+        dHasta.value = gh || (dias.length ? iso(dias[dias.length - 1]) : '');
+        setRangoStatus('', 'info');
+        document.getElementById('rangoTxtModal').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function cerrarRangoTxt() {
+        document.getElementById('rangoTxtModal').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    function setRangoStatus(msg, tipo = 'info') {
+        const el = document.getElementById('rangoStatus');
+        el.textContent = msg;
+        el.className = 'retag-status ' + tipo;
+    }
+
+    async function descargarTxtRango() {
+        const desde = (document.getElementById('rangoDesde').value || '').replace(/-/g, '');
+        const hasta = (document.getElementById('rangoHasta').value || '').replace(/-/g, '');
+        if (!desde || !hasta) { setRangoStatus('Selecciona ambas fechas.', 'err'); return; }
+        if (desde > hasta)    { setRangoStatus('La fecha inicial no puede ser mayor que la final.', 'err'); return; }
+
+        const btn = document.getElementById('rangoDescargarBtn');
+        btn.disabled = true;
+        setRangoStatus('Recopilando actividades…', 'info');
+        try {
+            await Promise.all([loadTopics('civil'), loadTopics('em')]);
+            const sets = _temaSets();
+
+            // Un solo POST trae TODOS los informes de la carpeta (para las descripciones)
+            await precargarInformes();
+
+            // Días con actividad dentro del rango
+            const dias = [...new Set(
+                allFiles.filter(f => f.fecha && f.fecha >= desde && f.fecha <= hasta &&
+                                     (f.temaPrincipal || f.temaSecundario))
+                        .map(f => f.fecha)
+            )].sort();
+
+            if (!dias.length) { setRangoStatus('No hay fotos clasificadas en ese rango.', 'err'); return; }
+
+            const cuerpo = [];
+            let totAct = 0, totFotos = 0, totDesc = 0, diasConDatos = 0;
+
+            dias.forEach(fecha => {
+                const lista = _gruposDelDia(fecha, sets);
+                if (!lista.length) return;
+                const entradasInf = _entradasInfDia(fecha);
+                const { lines, totFotos: tf, conDesc } = _bloqueDia(lista, entradasInf);
+                const fIso = `${fecha.slice(0,4)}-${fecha.slice(4,6)}-${fecha.slice(6,8)}`;
+
+                cuerpo.push('#'.repeat(70));
+                cuerpo.push(`DÍA ${fIso} (${_diaSemana(fecha)}) · ${lista.length} actividad(es) · ${tf} foto(s)`);
+                cuerpo.push('#'.repeat(70));
+                cuerpo.push('');
+                cuerpo.push(...lines);
+
+                totAct   += lista.length;
+                totFotos += tf;
+                totDesc  += conDesc;
+                diasConDatos++;
+            });
+
+            const isoD = `${desde.slice(0,4)}-${desde.slice(4,6)}-${desde.slice(6,8)}`;
+            const isoH = `${hasta.slice(0,4)}-${hasta.slice(4,6)}-${hasta.slice(6,8)}`;
+            const linea = '='.repeat(70);
+            const head = [
+                linea,
+                'INFORME DE ACTIVIDADES · RANGO DE FECHAS',
+                `Proyecto : ${PROYECTO_PARAM || '—'}`,
+                `Rango    : ${isoD} (${_diaSemana(desde)}) → ${isoH} (${_diaSemana(hasta)})`,
+                `Resumen  : ${diasConDatos} día(s) con actividad · ${totAct} actividad(es) · ${totFotos} fotografía(s) · ${totDesc} con descripción`,
+                `Generado : ${new Date().toLocaleString('es')}`,
+                linea,
+                '',
+                'Actividades ejecutadas en el rango, agrupadas por día y disciplina,',
+                'con su clasificación completa y la descripción de lo realizado, para',
+                'que un asistente de IA comprenda con precisión el trabajo del período.',
+                ''
+            ];
+
+            _bajarTxt(`Actividades_${desde}_a_${hasta}.txt`, head.concat(cuerpo).join('\n'));
+            setRangoStatus(`✓ ${diasConDatos} día(s) · ${totAct} actividad(es) · ${totFotos} foto(s).`, 'ok');
+        } catch (err) {
+            console.error('Error al generar el TXT del rango', err);
+            setRangoStatus('No se pudo generar el TXT: ' + err.message, 'err');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
     async function abrirPdfDia(fecha) {
         const modal = document.getElementById('pdfModal');
         modal.classList.add('open');
@@ -5320,9 +5771,13 @@
     document.getElementById('pdfModal').addEventListener('click', function (e) {
         if (e.target === this) cerrarPdf();
     });
+    document.getElementById('rangoTxtModal').addEventListener('click', function (e) {
+        if (e.target === this) cerrarRangoTxt();
+    });
     document.addEventListener('keydown', e => {
         if (e.key !== 'Escape') return;
         if (document.getElementById('pdfModal').classList.contains('open'))      cerrarPdf();
+        else if (document.getElementById('rangoTxtModal').classList.contains('open')) cerrarRangoTxt();
         else if (document.getElementById('informeModal').classList.contains('open')) cerrarInforme();
     });
 
@@ -5515,6 +5970,21 @@
     }
 
     // ── Añadir / quitar fotos ───────────────────────────────────────────────
+    // Conjunto de ids de fotos que están en cualquier depósito
+    function _idsEnDepositos() {
+        const s = new Set();
+        for (let k = 0; k < BK_N; k++) bucketItems[k].forEach(id => s.add(id));
+        return s;
+    }
+    // Sombrea/bloquea visualmente las tarjetas (grid + pendientes) que ya están
+    // en algún depósito, para saber cuáles se han añadido.
+    function refreshBucketedCards() {
+        const ids = _idsEnDepositos();
+        document.querySelectorAll('.photo-card[data-fileid], .pending-card[data-fileid]').forEach(card => {
+            card.classList.toggle('in-bucket', ids.has(card.dataset.fileid));
+        });
+    }
+
     function addToBucket(i, fileId) {
         if (!fileId) return;
         for (let k = 0; k < BK_N; k++) if (k !== i) bucketItems[k].delete(fileId);   // única pertenencia
@@ -5588,6 +6058,7 @@
         const btn = document.getElementById('dockApplyBtn');
         btn.textContent = `Aplicar todo (${listos})`;
         btn.disabled = listos === 0;
+        refreshBucketedCards();
     }
 
     // ── Construir las operaciones de un depósito ────────────────────────────
