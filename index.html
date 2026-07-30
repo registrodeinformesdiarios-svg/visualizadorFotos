@@ -1985,6 +1985,12 @@
             display: inline-flex; align-items: center; justify-content: center;
         }
         .dup-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+        .dup-purge-exact {
+            border-color: rgba(239,68,68,0.5); background: rgba(239,68,68,0.12);
+            color: #fca5a5;
+        }
+        .dup-purge-exact:hover:not(:disabled) { background: rgba(239,68,68,0.22); }
+        .dup-purge-exact:disabled { opacity: .4; cursor: not-allowed; background: rgba(239,68,68,0.06); }
         .dup-sens {
             display: flex; align-items: center; gap: 7px;
             font-size: 11px; color: var(--text-muted);
@@ -2170,6 +2176,7 @@
                 <input type="range" id="dupThreshold" min="0" max="16" value="3" oninput="onDupThresholdChange()">
                 <span id="dupThreshVal">3</span>
             </label>
+            <button class="pending-btn dup-purge-exact" id="dupAutoPurgeBtn" onclick="depurarExactasAuto()" disabled title="Envía a papelera, sin revisión manual, las copias idénticas (distancia 0) que sean re-subidas de la misma clasificación/fecha o que estén pendientes de clasificar. Siempre conserva una copia.">🗑 Eliminar exactas (0)</button>
             <button class="pending-btn" onclick="analizarDuplicados()">↻ Reanalizar</button>
             <button class="pending-btn" id="dupToggle" onclick="toggleDupSection()">▾ Ocultar</button>
         </div>
@@ -2179,6 +2186,9 @@
         casi idénticas se agrupan. La <strong>mejor clasificada</strong> (nombre más largo)
         se marca como original; las demás muestran su <strong>distancia</strong> (0 = idéntica).
         Revisa y envía a papelera las repetidas.
+        <br><strong style="color:#fca5a5">Eliminar exactas</strong>: borra automáticamente (sin revisar una por una)
+        solo las copias con <strong>distancia 0</strong> que compartan <strong>exactamente la misma clasificación y fecha</strong>,
+        o que estén en <strong>pendientes de clasificar</strong> cuando ya existe una copia idéntica. Siempre conserva una copia.
     </p>
     <div class="dup-progress" id="dupProgress"></div>
     <div class="dup-groups" id="dupGroups"></div>
@@ -6416,6 +6426,7 @@
     function renderDupGroups() {
         const cont = document.getElementById('dupGroups');
         document.getElementById('dupGroupCount').textContent = _dupClusters.length;
+        _actualizarBotonExactas();
 
         if (!_dupClusters.length) {
             cont.innerHTML = '<div class="dup-empty">No se encontraron fotos repetidas con la sensibilidad actual. Súbela para detectar parecidos más lejanos.</div>';
@@ -6529,6 +6540,116 @@
         _refrescarTrasBorrado();
         reclusterDuplicados();
         prog.textContent = err ? `${ok} enviadas a papelera, ${err} con error` : `✓ ${ok} repetida(s) enviada(s) a papelera`;
+    }
+
+    // ── Depuración AUTOMÁTICA de repetidas EXACTAS (distancia 0) ─────────────
+    // Envía a papelera, sin revisión manual, las copias sobrantes que son
+    // idénticas (misma huella perceptual → Hamming = 0) y además cumplen una de:
+    //   · comparten EXACTAMENTE la misma clasificación (tema + título) y fecha
+    //     → son re-subidas del mismo archivo ya clasificado; o
+    //   · están en el buffer de "pendientes de clasificar" y ya existe una copia
+    //     idéntica clasificada (pues ya se subió y clasificó), o hay varias
+    //     pendientes iguales entre sí.
+    // Regla de seguridad: SIEMPRE se conserva una copia de cada imagen y de cada
+    // clasificación distinta; nunca se toca un grupo con clasificaciones diferentes.
+    // Es independiente del control de "Sensibilidad" (solo distancia exacta = 0).
+
+    function _sigClasifExacta(f) {
+        const tp = (f.temaPrincipal || '').trim().toLowerCase();
+        const ts = (f.temaSecundario || '').trim().toLowerCase();
+        const fe = (f.fecha || '').trim();
+        return tp + '¦' + ts + '¦' + fe;
+    }
+
+    // Devuelve { borrar: [files], grupos: n } con el plan de eliminación.
+    function _planDepuracionExacta() {
+        const borrar = [];
+        let grupos = 0;
+
+        // Agrupar por huella EXACTA (no depende del umbral de sensibilidad).
+        const porHuella = {};
+        allFiles.forEach(f => {
+            const h = dupHash[f.id];
+            if (!h) return;
+            const key = (h[0] >>> 0) + ',' + (h[1] >>> 0);
+            (porHuella[key] = porHuella[key] || []).push(f);
+        });
+
+        Object.values(porHuella).forEach(grupo => {
+            if (grupo.length < 2) return;   // sin repetidas exactas
+            let afecta = false;
+
+            const pendientes   = grupo.filter(f => esPendiente(f));
+            const clasificadas = grupo.filter(f => !esPendiente(f));
+
+            // 1) Clasificadas: conservar 1 por (clasificación + fecha); borrar el resto.
+            //    Distintas clasificaciones → cada una conserva su copia (no se borran).
+            const vistas = new Set();
+            clasificadas.forEach(f => {
+                const sig = _sigClasifExacta(f);
+                if (vistas.has(sig)) { borrar.push(f); afecta = true; }
+                else vistas.add(sig);
+            });
+
+            // 2) Pendientes:
+            if (clasificadas.length > 0) {
+                // Ya existe una copia idéntica clasificada → toda pendiente sobra.
+                pendientes.forEach(f => { borrar.push(f); afecta = true; });
+            } else if (pendientes.length > 1) {
+                // Solo pendientes iguales entre sí → conservar 1, borrar el resto.
+                pendientes.slice(1).forEach(f => { borrar.push(f); afecta = true; });
+            }
+
+            if (afecta) grupos++;
+        });
+
+        return { borrar, grupos };
+    }
+
+    function _actualizarBotonExactas() {
+        const btn = document.getElementById('dupAutoPurgeBtn');
+        if (!btn) return;
+        const n = _planDepuracionExacta().borrar.length;
+        btn.textContent = `🗑 Eliminar exactas (${n})`;
+        btn.disabled = n === 0;
+    }
+
+    async function depurarExactasAuto() {
+        const prog = document.getElementById('dupProgress');
+        if (!MGMT_SCRIPT_URL) {
+            prog.textContent = '⚠ Configura la URL del Script de Operaciones en Configuración';
+            return;
+        }
+        const { borrar, grupos } = _planDepuracionExacta();
+        if (!borrar.length) {
+            prog.textContent = 'No hay repetidas exactas (distancia 0) que eliminar automáticamente.';
+            return;
+        }
+
+        const nPend = borrar.filter(f => esPendiente(f)).length;
+        const nClas = borrar.length - nPend;
+        const detalle = [
+            nClas ? `${nClas} re-subida(s) con misma clasificación y fecha` : '',
+            nPend ? `${nPend} pendiente(s) ya subida(s)/clasificada(s)` : ''
+        ].filter(Boolean).join(' + ');
+
+        if (!confirm(
+            `Se enviarán a la papelera ${borrar.length} foto(s) repetida(s) exacta(s) (distancia 0)` +
+            `\n(${detalle}), de ${grupos} grupo(s).` +
+            `\n\nSiempre se conserva una copia de cada imagen. ¿Continuar?`
+        )) return;
+
+        const ids = borrar.map(f => f.id);
+        let ok = 0, err = 0;
+        for (let i = 0; i < ids.length; i++) {
+            prog.textContent = `Eliminando exactas ${i + 1}/${ids.length}…`;
+            try { await _trashOne(ids[i]); ok++; } catch (e) { err++; }
+        }
+        _refrescarTrasBorrado();
+        reclusterDuplicados();   // re-renderiza grupos y recalcula el botón
+        prog.textContent = err
+            ? `✓ ${ok} enviada(s) a papelera, ${err} con error`
+            : `✓ ${ok} repetida(s) exacta(s) enviada(s) a papelera`;
     }
 
     _loadDupCache();
