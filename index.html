@@ -1140,6 +1140,19 @@
         .tl-txt-btn:hover { background: rgba(34,197,94,.28); }
         .tl-txt-btn:disabled { opacity: .5; cursor: progress; }
 
+        .tl-dh-btns .tl-fotos-btn { margin: 0; }
+        .tl-fotos-btn {
+            display: block; cursor: pointer;
+            font-family: 'DM Mono', monospace;
+            font-size: 8px; font-weight: 600; letter-spacing: .04em;
+            color: #fbbf24;
+            background: rgba(245,158,11,.14);
+            border: 1px solid rgba(245,158,11,.4);
+            border-radius: 5px; padding: 1px 7px; line-height: 1.4;
+        }
+        .tl-fotos-btn:hover { background: rgba(245,158,11,.26); }
+        .tl-fotos-btn:disabled { opacity: .5; cursor: progress; }
+
         /* ── MODAL PREVISUALIZACIÓN PDF ── */
         #pdfModal {
             display: none; position: fixed; inset: 0; z-index: 340;
@@ -1236,6 +1249,29 @@
         #rangoTxtModal.open { display: flex; animation: lbIn .15s ease; }
         .rango-row { display: flex; gap: 12px; }
         .rango-row .retag-field { flex: 1; margin-bottom: 0; }
+
+        /* ── DESCARGAR FOTOS DE UN DÍA ── */
+        #diaFotosModal {
+            display: none; position: fixed; inset: 0; z-index: 400;
+            background: rgba(5,7,12,.82); backdrop-filter: blur(10px);
+            align-items: center; justify-content: center;
+        }
+        #diaFotosModal.open { display: flex; animation: lbIn .15s ease; }
+        .df-breakdown { display: flex; flex-direction: column; gap: 7px; margin: 14px 0 4px; }
+        .df-chk {
+            display: flex; align-items: center; gap: 9px; font-size: 12.5px;
+            color: var(--text-dim); cursor: pointer; padding: 7px 10px;
+            border: 1px solid var(--border); border-radius: 8px; background: var(--surface2);
+        }
+        .df-chk input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+        .df-chk .cnt { margin-left: auto; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+        .df-chk.zero { opacity: .45; }
+        .df-chk.zero input { pointer-events: none; }
+        .df-total { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+        .df-total strong { color: var(--text); }
+        .df-prog { margin-top: 10px; height: 6px; border-radius: 4px; background: var(--border); overflow: hidden; display: none; }
+        .df-prog.show { display: block; }
+        .df-prog > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
 
         /* ── RETAG MODAL ── */
         #retagModal {
@@ -2268,6 +2304,10 @@
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
             <span>TXT rango</span>
         </button>
+        <button class="tl-range-btn" id="tlFotosDiaBtn" onclick="abrirDiaFotos()" title="Descargar (ZIP) todas las fotos con marca de un día específico" style="color:#fbbf24; border-color:rgba(245,158,11,.4);">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7h4l2-2h6l2 2h4v12H3z"/><circle cx="12" cy="13" r="3.2"/></svg>
+            <span>Fotos día</span>
+        </button>
         <button class="tl-toggle" id="tlToggle" onclick="toggleTimeline()">
             <span id="tlToggleText">Ocultar</span>
             <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m18 15-6-6-6 6"/></svg>
@@ -2539,6 +2579,46 @@
             <button class="retag-save" id="rangoDescargarBtn" onclick="descargarTxtRango()">Descargar TXT</button>
         </div>
         <div class="retag-status" id="rangoStatus"></div>
+    </div>
+</div>
+
+<!-- DESCARGAR FOTOS DE UN DÍA MODAL -->
+<div id="diaFotosModal">
+    <div class="retag-box" style="max-width:420px;">
+        <div class="retag-title">
+            Descargar fotos de un día
+            <button class="settings-close" onclick="cerrarDiaFotos()">×</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:16px;">
+            Elige un día y descarga en un solo <strong>.zip</strong> todas sus fotos.
+            Las que tienen <strong>marca dinámica</strong> se descargan con la marca ya aplicada;
+            el resto se descargan tal cual están en Drive.
+        </p>
+        <div class="retag-field" style="margin-bottom:6px;">
+            <label class="field-label">Día</label>
+            <input type="date" id="diaFotosFecha" class="field-input" style="width:100%;" onchange="_diaFotosActualizarConteo()">
+        </div>
+        <div class="df-breakdown" id="diaFotosBreakdown">
+            <label class="df-chk" id="dfChkConWrap">
+                <input type="checkbox" id="dfChkCon" checked onchange="_diaFotosActualizarConteo()">
+                <span>🏷 Con marca dinámica</span><span class="cnt" id="dfCntCon">0</span>
+            </label>
+            <label class="df-chk" id="dfChkFijaWrap">
+                <input type="checkbox" id="dfChkFija" checked onchange="_diaFotosActualizarConteo()">
+                <span>🔒 Marca fija / incrustada</span><span class="cnt" id="dfCntFija">0</span>
+            </label>
+            <label class="df-chk" id="dfChkSinWrap">
+                <input type="checkbox" id="dfChkSin" onchange="_diaFotosActualizarConteo()">
+                <span>◯ Sin marca</span><span class="cnt" id="dfCntSin">0</span>
+            </label>
+        </div>
+        <div class="df-total" id="diaFotosTotal">Selecciona un día.</div>
+        <div class="df-prog" id="diaFotosProg"><i id="diaFotosProgBar"></i></div>
+        <div class="retag-actions" style="margin-top:16px;">
+            <button class="retag-cancel" onclick="cerrarDiaFotos()">Cancelar</button>
+            <button class="retag-save" id="diaFotosDescargarBtn" onclick="descargarFotosDia()" disabled>Descargar ZIP</button>
+        </div>
+        <div class="retag-status" id="diaFotosStatus"></div>
     </div>
 </div>
 
@@ -3766,6 +3846,7 @@
                 `<div class="tl-dh-btns">` +
                 `<button class="tl-pdf-btn" title="Generar PDF del informe de este día" onclick="abrirPdfDia('${fecha}')">PDF</button>` +
                 `<button class="tl-txt-btn" title="Descargar TXT con las actividades y descripciones de este día (para la IA)" onclick="descargarTxtDia('${fecha}', this)">TXT</button>` +
+                `<button class="tl-fotos-btn" title="Descargar (ZIP) todas las fotos con marca de este día" onclick="abrirDiaFotos('${fecha}')">FOTOS</button>` +
                 `</div>` +
                 `<span class="d-num">${info.num}</span>${info.sub}</div>`);
 
@@ -5723,6 +5804,212 @@
         } catch (err) {
             console.error('Error al generar el TXT del rango', err);
             setRangoStatus('No se pudo generar el TXT: ' + err.message, 'err');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // DESCARGAR TODAS LAS FOTOS (CON MARCA) DE UN DÍA — empaquetadas en un ZIP
+    // Las fotos con marca dinámica se componen con la marca aplicada; el resto
+    // se guardan tal cual están en Drive. Se descarga un único archivo .zip.
+    // ══════════════════════════════════════════════════════════════════════
+    let _jszipP = null;
+    function _loadJSZip() {
+        if (window.JSZip) return Promise.resolve();
+        if (_jszipP) return _jszipP;
+        _jszipP = new Promise((ok, bad) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+            s.onload  = () => ok();
+            s.onerror = () => bad(new Error('No se pudo cargar la librería de compresión (JSZip)'));
+            document.head.appendChild(s);
+        });
+        return _jszipP;
+    }
+
+    const _isoAMD = f => (f && f.length === 8) ? `${f.slice(0,4)}-${f.slice(4,6)}-${f.slice(6,8)}` : '';
+    const _amdIso = v => (v || '').replace(/-/g, '');
+
+    // Fotos del día seleccionado, separadas por estado de marca
+    function _fotosDelDiaPorMarca(fechaAMD) {
+        const con = [], fija = [], sin = [];
+        allFiles.forEach(f => {
+            if (f.fecha !== fechaAMD) return;
+            if (f.marcaEstado === 'con_marca')      con.push(f);
+            else if (f.marcaEstado === 'sin_marca') sin.push(f);
+            else                                    fija.push(f);   // 'fija' o sistema anterior
+        });
+        return { con, fija, sin };
+    }
+
+    function setDiaFotosStatus(msg, tipo = 'info') {
+        const el = document.getElementById('diaFotosStatus');
+        el.textContent = msg; el.className = 'retag-status ' + tipo;
+    }
+
+    function abrirDiaFotos(fechaAMD) {
+        if (!allFiles.length) {
+            (typeof showLbToast === 'function' ? showLbToast : alert)('Primero carga las fotos.', 'err');
+            return;
+        }
+        const inp = document.getElementById('diaFotosFecha');
+        if (fechaAMD && /^\d{8}$/.test(fechaAMD)) {
+            inp.value = _isoAMD(fechaAMD);
+        } else if (!inp.value) {
+            const dias = [...new Set(allFiles.filter(f => f.fecha).map(f => f.fecha))].sort();
+            inp.value = dias.length ? _isoAMD(dias[dias.length - 1]) : '';
+        }
+        document.getElementById('dfChkCon').checked  = true;
+        document.getElementById('dfChkFija').checked = true;
+        document.getElementById('dfChkSin').checked  = false;
+        setDiaFotosStatus('', 'info');
+        document.getElementById('diaFotosProg').classList.remove('show');
+        document.getElementById('diaFotosProgBar').style.width = '0%';
+        document.getElementById('diaFotosModal').classList.add('open');
+        document.body.style.overflow = 'hidden';
+        _diaFotosActualizarConteo();
+    }
+
+    function cerrarDiaFotos() {
+        document.getElementById('diaFotosModal').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    function _diaFotosActualizarConteo() {
+        const fechaAMD = _amdIso(document.getElementById('diaFotosFecha').value);
+        const { con, fija, sin } = fechaAMD ? _fotosDelDiaPorMarca(fechaAMD) : { con: [], fija: [], sin: [] };
+        const setChk = (wrapId, cntId, chkId, arr) => {
+            document.getElementById(cntId).textContent = arr.length;
+            document.getElementById(wrapId).classList.toggle('zero', arr.length === 0);
+            const chk = document.getElementById(chkId);
+            if (arr.length === 0) chk.checked = false;
+            chk.disabled = arr.length === 0;
+        };
+        setChk('dfChkConWrap',  'dfCntCon',  'dfChkCon',  con);
+        setChk('dfChkFijaWrap', 'dfCntFija', 'dfChkFija', fija);
+        setChk('dfChkSinWrap',  'dfCntSin',  'dfChkSin',  sin);
+
+        const total =
+            (document.getElementById('dfChkCon').checked  ? con.length  : 0) +
+            (document.getElementById('dfChkFija').checked ? fija.length : 0) +
+            (document.getElementById('dfChkSin').checked  ? sin.length  : 0);
+        const totalDia = con.length + fija.length + sin.length;
+
+        const tEl = document.getElementById('diaFotosTotal');
+        if (!fechaAMD)          tEl.innerHTML = 'Selecciona un día.';
+        else if (!totalDia)     tEl.innerHTML = `No hay fotos el <strong>${_isoAMD(fechaAMD)}</strong>.`;
+        else                    tEl.innerHTML = `Se descargarán <strong>${total}</strong> de ${totalDia} foto(s) del <strong>${_isoAMD(fechaAMD)}</strong>.`;
+
+        const btn = document.getElementById('diaFotosDescargarBtn');
+        btn.disabled = total === 0;
+        btn.textContent = total ? `Descargar ZIP (${total})` : 'Descargar ZIP';
+    }
+
+    // Devuelve un Blob listo para guardar; si es 'con_marca', compone la marca.
+    async function _blobFotoParaDescarga(f, apiKey) {
+        const res = await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media&key=${apiKey}`);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const orig = await res.blob();
+        if (f.marcaEstado !== 'con_marca') return orig;   // fija / sin marca → tal cual
+
+        const url = URL.createObjectURL(orig);
+        try {
+            const img = await new Promise((ok, bad) => {
+                const i = new Image();
+                i.onload = () => ok(i);
+                i.onerror = () => bad(new Error('No se pudo leer la imagen'));
+                i.src = url;
+            });
+            const cv = document.createElement('canvas');
+            cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+            const ctx = cv.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            drawMarcaOnContext(ctx, cv.width, cv.height, datosMarca(f));
+            return await new Promise((ok, bad) =>
+                cv.toBlob(b => b ? ok(b) : bad(new Error('toBlob falló')), 'image/jpeg', 0.92));
+        } finally {
+            URL.revokeObjectURL(url);
+        }
+    }
+
+    async function descargarFotosDia() {
+        const fechaAMD = _amdIso(document.getElementById('diaFotosFecha').value);
+        if (!fechaAMD) { setDiaFotosStatus('Selecciona un día.', 'err'); return; }
+
+        const apiKey = localStorage.getItem('viewer_api_key');
+        if (!apiKey) { cerrarDiaFotos(); openSettings(); return; }
+
+        const { con, fija, sin } = _fotosDelDiaPorMarca(fechaAMD);
+        const lista = [];
+        if (document.getElementById('dfChkCon').checked)  lista.push(...con);
+        if (document.getElementById('dfChkFija').checked) lista.push(...fija);
+        if (document.getElementById('dfChkSin').checked)  lista.push(...sin);
+        if (!lista.length) { setDiaFotosStatus('No hay fotos seleccionadas.', 'err'); return; }
+
+        const btn      = document.getElementById('diaFotosDescargarBtn');
+        const progWrap = document.getElementById('diaFotosProg');
+        const progBar  = document.getElementById('diaFotosProgBar');
+        btn.disabled = true;
+        progWrap.classList.add('show'); progBar.style.width = '0%';
+        setDiaFotosStatus('Cargando compresor…', 'info');
+
+        try {
+            await _loadJSZip();
+            const zip = new JSZip();
+
+            const usados = new Set();
+            const nombreUnico = base => {
+                const dot  = base.lastIndexOf('.');
+                const stem = dot > 0 ? base.slice(0, dot) : base;
+                const ext  = dot > 0 ? base.slice(dot) : '';
+                let n = base, i = 2;
+                while (usados.has(n)) n = `${stem}_${i++}${ext}`;
+                usados.add(n);
+                return n;
+            };
+
+            let ok = 0, err = 0, done = 0, idx = 0;
+            const total = lista.length;
+            const worker = async () => {
+                while (idx < lista.length) {
+                    const f = lista[idx++];
+                    try {
+                        if (f.marcaEstado === 'con_marca') { try { await ensureMetaFromXmp(f); } catch (e) {} }
+                        const blob = await _blobFotoParaDescarga(f, apiKey);
+                        zip.file(nombreUnico(f.name || `foto_${f.id}.jpg`), blob);
+                        ok++;
+                    } catch (e) { err++; }
+                    done++;
+                    progBar.style.width = Math.round(done / total * 70) + '%';
+                    setDiaFotosStatus(`Descargando ${done}/${total}…`, 'info');
+                }
+            };
+            await Promise.all(Array.from({ length: Math.min(4, lista.length) }, worker));
+
+            if (!ok) { setDiaFotosStatus('No se pudo descargar ninguna foto. Revisa tu Google API Key.', 'err'); return; }
+
+            setDiaFotosStatus('Comprimiendo…', 'info');
+            const zipBlob = await zip.generateAsync(
+                { type: 'blob', compression: 'STORE' },
+                m => { progBar.style.width = (70 + Math.round(m.percent * 0.3)) + '%'; }
+            );
+
+            const iso = _isoAMD(fechaAMD);
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(zipBlob);
+            a.download = `Fotos_${iso}.zip`;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+
+            progBar.style.width = '100%';
+            setDiaFotosStatus(
+                err ? `✓ ${ok} foto(s) en el ZIP · ${err} con error` : `✓ ${ok} foto(s) descargada(s) en el ZIP`,
+                err ? 'info' : 'ok'
+            );
+        } catch (e) {
+            console.error('Error al descargar fotos del día', e);
+            setDiaFotosStatus('Error: ' + e.message, 'err');
         } finally {
             btn.disabled = false;
         }
